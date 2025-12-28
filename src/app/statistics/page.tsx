@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
 // Health centers list - can be replaced with API/database later
@@ -176,8 +176,26 @@ const initialTopicStats: TopicStatistics = {
   seminars: 0,
 };
 
+// Helper functions for duplicate detection using localStorage
+const getReportKey = (healthCenterName: string, month: string, year: number): string => {
+  return `health_report_${healthCenterName}_${year}_${month}`;
+};
+
+const isReportSubmitted = (healthCenterName: string, month: string, year: number): boolean => {
+  if (typeof window === "undefined") return false;
+  const key = getReportKey(healthCenterName, month, year);
+  return localStorage.getItem(key) !== null;
+};
+
+const markReportAsSubmitted = (healthCenterName: string, month: string, year: number): void => {
+  if (typeof window === "undefined") return;
+  const key = getReportKey(healthCenterName, month, year);
+  localStorage.setItem(key, JSON.stringify({ submittedAt: new Date().toISOString() }));
+};
+
 export default function StatisticsPage() {
   const [validationError, setValidationError] = useState<string>("");
+  const [duplicateError, setDuplicateError] = useState<string>("");
   
   const [formData, setFormData] = useState<MonthlyStatistics>(() => {
     const currentDate = new Date();
@@ -232,16 +250,56 @@ export default function StatisticsPage() {
     }));
   };
 
+  // Check for duplicate when form data changes
+  useEffect(() => {
+    if (formData.healthCenterName && formData.month && formData.year) {
+      if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
+        const monthNames = [
+          "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+          "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+        ];
+        const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+        setDuplicateError(
+          `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن إرسال تقرير آخر لنفس الفترة.`
+        );
+      } else {
+        setDuplicateError("");
+      }
+    } else {
+      setDuplicateError("");
+    }
+  }, [formData.healthCenterName, formData.month, formData.year]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate health center selection
     if (!formData.healthCenterName || formData.healthCenterName === "") {
       setValidationError("يرجى اختيار اسم المركز الصحي");
+      setDuplicateError("");
+      return;
+    }
+    
+    // Check for duplicate submission
+    if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
+      const monthNames = [
+        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+      ];
+      const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+      setDuplicateError(
+        `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن إرسال تقرير آخر لنفس الفترة.`
+      );
+      setValidationError("");
       return;
     }
     
     setValidationError("");
+    setDuplicateError("");
+    
+    // Mark report as submitted
+    markReportAsSubmitted(formData.healthCenterName, formData.month, formData.year);
+    
     const exportData = JSON.stringify(formData, null, 2);
     console.log("Statistics Data:", exportData);
     alert("تم حفظ البيانات بنجاح.");
@@ -262,10 +320,26 @@ export default function StatisticsPage() {
     // Validate health center selection
     if (!formData.healthCenterName || formData.healthCenterName === "") {
       setValidationError("يرجى اختيار اسم المركز الصحي قبل التصدير");
+      setDuplicateError("");
+      return;
+    }
+    
+    // Check for duplicate submission
+    if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
+      const monthNames = [
+        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+      ];
+      const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+      setDuplicateError(
+        `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن تصدير تقرير مكرر.`
+      );
+      setValidationError("");
       return;
     }
     
     setValidationError("");
+    setDuplicateError("");
     
     // Prepare data for Excel export
     const excelData: Array<{
@@ -418,6 +492,30 @@ export default function StatisticsPage() {
             </div>
           </div>
 
+          {/* Duplicate Warning */}
+          {duplicateError && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-500 mt-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="mr-3">
+                  <p className="text-sm font-medium text-red-800">{duplicateError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Statistics Categories */}
           {Object.entries(formStructure).map(([categoryKey, category]) => {
             const categoryData = formData.categories[categoryKey as keyof typeof formStructure];
@@ -528,14 +626,24 @@ export default function StatisticsPage() {
           <div className="mt-8 flex justify-center gap-4 flex-wrap">
             <button
               type="submit"
-              className="px-8 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+              disabled={!!duplicateError}
+              className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                duplicateError
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700"
+              }`}
             >
               حفظ البيانات
             </button>
             <button
               type="button"
               onClick={handleExportToExcel}
-              className="px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+              disabled={!!duplicateError}
+              className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                duplicateError
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              }`}
             >
               تصدير إلى Excel
             </button>
