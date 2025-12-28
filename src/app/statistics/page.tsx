@@ -371,7 +371,7 @@ export default function StatisticsPage() {
         const topicData = categoryData[topic] || initialTopicStats;
         excelData.push({
           "اسم المركز الصحي": formData.healthCenterName || "",
-          "الشهر": formData.month,
+          "الشهر": arabicMonths[parseInt(formData.month) - 1] || formData.month,
           "السنة": formData.year,
           "الفئة": category.title,
           "الموضوع": topic,

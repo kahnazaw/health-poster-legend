@@ -169,19 +169,11 @@ export default function SectorDashboardPage() {
     }> = [];
 
     submissions.forEach((submission) => {
-      const monthName = arabicMonths[parseInt(selectedMonth) - 1] || selectedMonth;
-      
       excelData.push({
         "اسم المركز الصحي": submission.centerName,
         "حالة الإرسال": submission.submitted ? "تم الإرسال" : "لم يتم الإرسال",
         "تاريخ ووقت الإرسال": submission.submittedAt
-          ? new Date(submission.submittedAt).toLocaleString("ar-IQ", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+          ? formatDate(submission.submittedAt)
           : "غير متوفر",
         "مجموع الجلسات الفردية": submission.totals?.individualSessions || 0,
         "مجموع المحاضرات": submission.totals?.lectures || 0,
@@ -233,13 +225,13 @@ export default function SectorDashboardPage() {
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString("ar-IQ", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      const monthIndex = date.getMonth();
+      const arabicMonth = arabicMonths[monthIndex] || "";
+      const day = date.getDate();
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${day} ${arabicMonth} ${year}، ${hours}:${minutes}`;
     } catch {
       return dateString;
     }
