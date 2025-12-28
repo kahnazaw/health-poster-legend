@@ -276,11 +276,7 @@ export default function StatisticsPage() {
   useEffect(() => {
     if (formData.healthCenterName && formData.month && formData.year) {
       if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
-        const monthNames = [
-          "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-          "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-        ];
-        const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+        const monthName = arabicMonths[parseInt(formData.month) - 1] || formData.month;
         setDuplicateError(
           `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن إرسال تقرير آخر لنفس الفترة.`
         );
