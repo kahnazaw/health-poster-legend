@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { logAudit } from "@/lib/audit";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
@@ -65,6 +66,8 @@ export default function SignupPage() {
 
       if (data.user) {
         // Profile will be created automatically by trigger
+        // Log audit event
+        await logAudit(data.user.id, "signup");
         setSuccess(true);
         setError("");
         // Clear form

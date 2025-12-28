@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { logAudit } from "@/lib/audit";
 
 interface PendingUser {
   id: string;
@@ -78,6 +79,9 @@ export default function AdminApprovalsPage() {
         return;
       }
 
+      // Log audit event
+      await logAudit(userId, "approved");
+
       setSuccessMessage("تمت الموافقة على المستخدم بنجاح");
       setApproving(null);
       await loadPendingUsers();
@@ -97,6 +101,9 @@ export default function AdminApprovalsPage() {
       setRejecting(userId);
       setError("");
       setSuccessMessage("");
+
+      // Log audit event
+      await logAudit(userId, "rejected");
 
       // Option: Keep user but mark as rejected, or delete
       // For now, we'll keep the user but they remain unapproved

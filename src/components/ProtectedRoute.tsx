@@ -62,7 +62,7 @@ export default function ProtectedRoute({
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">حسابك قيد المراجعة</h2>
             <p className="text-gray-700 mb-6">
-              تم إنشاء الحساب بنجاح، وهو قيد المراجعة من الإدارة
+              تم إنشاء حسابك بنجاح، لكنه قيد المراجعة من قبل إدارة القطاع. سيتم تفعيل الحساب بعد الموافقة.
             </p>
           </div>
         </div>

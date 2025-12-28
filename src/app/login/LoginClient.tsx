@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { logAudit } from "@/lib/audit";
 
 export default function LoginClient() {
   const router = useRouter();
@@ -46,6 +47,9 @@ export default function LoginClient() {
           setLoading(false);
           return;
         }
+
+        // Log audit event for successful login
+        await logAudit(data.user.id, "login");
 
         // User is approved, redirect to appropriate page
         router.push(redirectTo);
