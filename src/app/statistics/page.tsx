@@ -3,6 +3,30 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 
+// Health centers list - can be replaced with API/database later
+const healthCenters = [
+  "مركز صحي الحويجة",
+  "مركز صحي الرشيد",
+  "مركز صحي الشورجة",
+  "مركز صحي العباسية",
+  "مركز صحي الكرامة",
+  "مركز صحي المأمون",
+  "مركز صحي النصر",
+  "مركز صحي الهاشمية",
+  "مركز صحي الوحدة",
+  "مركز صحي الحرية",
+  "مركز صحي الشهداء",
+  "مركز صحي السلام",
+  "مركز صحي الجهاد",
+  "مركز صحي الفردوس",
+  "مركز صحي الزهراء",
+  "مركز صحي الإخاء",
+  "مركز صحي التضامن",
+  "مركز صحي الأمل",
+  "مركز صحي الفتح",
+  "مركز صحي النهضة",
+];
+
 // Data structure matching the official Iraqi Ministry of Health monthly statistics form
 interface TopicStatistics {
   individualSessions: number;
@@ -153,6 +177,8 @@ const initialTopicStats: TopicStatistics = {
 };
 
 export default function StatisticsPage() {
+  const [validationError, setValidationError] = useState<string>("");
+  
   const [formData, setFormData] = useState<MonthlyStatistics>(() => {
     const currentDate = new Date();
     const categories: MonthlyStatistics["categories"] = {
@@ -208,6 +234,14 @@ export default function StatisticsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate health center selection
+    if (!formData.healthCenterName || formData.healthCenterName === "") {
+      setValidationError("يرجى اختيار اسم المركز الصحي");
+      return;
+    }
+    
+    setValidationError("");
     const exportData = JSON.stringify(formData, null, 2);
     console.log("Statistics Data:", exportData);
     alert("تم حفظ البيانات بنجاح.");
@@ -225,6 +259,14 @@ export default function StatisticsPage() {
   };
 
   const handleExportToExcel = () => {
+    // Validate health center selection
+    if (!formData.healthCenterName || formData.healthCenterName === "") {
+      setValidationError("يرجى اختيار اسم المركز الصحي قبل التصدير");
+      return;
+    }
+    
+    setValidationError("");
+    
     // Prepare data for Excel export
     const excelData: Array<{
       "اسم المركز الصحي": string;
@@ -297,17 +339,31 @@ export default function StatisticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 pb-6 border-b">
             <div>
               <label className="block text-sm font-medium mb-2">
-                اسم المركز الصحي
+                اسم المركز الصحي <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.healthCenterName}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, healthCenterName: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, healthCenterName: e.target.value }));
+                  if (validationError) setValidationError("");
+                }}
+                className={`w-full px-3 py-2 border rounded-md ${
+                  validationError
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                }`}
                 required
-              />
+              >
+                <option value="">-- اختر المركز الصحي --</option>
+                {healthCenters.map((center) => (
+                  <option key={center} value={center}>
+                    {center}
+                  </option>
+                ))}
+              </select>
+              {validationError && (
+                <p className="mt-1 text-sm text-red-500">{validationError}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">الشهر</label>
