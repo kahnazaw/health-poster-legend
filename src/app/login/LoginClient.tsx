@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/statistics";
-
-  const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,15 +20,34 @@ export default function LoginClient() {
     setError("");
 
     try {
-      // التعديل هنا: نرسل كائن واحد يحتوي على الإيميل والباسورد
-      const { error } = await signIn({ 
-        email: email, 
-        password: password 
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
       });
 
-      if (error) {
-        setError("بيانات الدخول غير صحيحة أو الحساب غير مفعل");
-      } else {
+      if (signInError) {
+        setError("بيانات الدخول غير صحيحة");
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Check if user is approved by fetching profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("is_approved")
+          .eq("id", data.user.id)
+          .single();
+
+        if (profileData && profileData.is_approved === false) {
+          // User is not approved, redirect to pending approval page
+          await supabase.auth.signOut();
+          setError("حسابك قيد المراجعة من الإدارة");
+          setLoading(false);
+          return;
+        }
+
+        // User is approved, redirect to appropriate page
         router.push(redirectTo);
         router.refresh();
       }

@@ -1,15 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session, SignInWithPasswordCredentials } from "@supabase/supabase-js";
+import { User, SignInWithPasswordCredentials } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-interface UserProfile {
-  id: string;
-  email: string;
+export interface Profile {
   full_name: string;
-  health_center_id?: string;
   health_center_name: string;
   role: "admin" | "center_user";
   is_approved: boolean;
@@ -17,97 +14,86 @@ interface UserProfile {
 
 interface AuthContextType {
   user: User | null;
-  profile: UserProfile | null;
-  session: Session | null;
-  loading: boolean;
-  signIn: (credentials: SignInWithPasswordCredentials) => Promise<any>;
+  profile: Profile | null;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const refreshProfile = async () => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-
+  const loadProfile = async (currentUser: User) => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
+        .select("full_name, health_center_name, role, is_approved")
+        .eq("id", currentUser.id)
         .single();
 
       if (error) {
-        const metadata = user.user_metadata;
-        if (metadata) {
+        // Fallback to user metadata if profile doesn't exist yet
+        const metadata = currentUser.user_metadata;
+        if (metadata && metadata.full_name && metadata.health_center_name) {
           setProfile({
-            id: user.id,
-            email: user.email || "",
-            full_name: metadata.full_name || "",
-            health_center_name: metadata.health_center_name || "",
+            full_name: metadata.full_name,
+            health_center_name: metadata.health_center_name,
             role: metadata.role === "admin" ? "admin" : "center_user",
-            is_approved: metadata.is_approved || false,
+            is_approved: metadata.is_approved === true,
           });
+        } else {
+          setProfile(null);
         }
       } else if (data) {
         setProfile({
-          id: data.id,
-          email: data.email,
-          full_name: data.full_name,
-          health_center_id: data.health_center_id,
-          health_center_name: data.health_center_name,
-          role: data.role as "admin" | "center_user",
-          is_approved: data.is_approved,
+          full_name: data.full_name || "",
+          health_center_name: data.health_center_name || "",
+          role: (data.role === "admin" ? "admin" : "center_user") as "admin" | "center_user",
+          is_approved: data.is_approved === true,
         });
+      } else {
+        setProfile(null);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+      setProfile(null);
     }
-  };
-
-  const signIn = async (credentials: SignInWithPasswordCredentials) => {
-    return await supabase.auth.signInWithPassword(credentials);
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        loadProfile(currentUser);
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        loadProfile(currentUser);
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      refreshProfile();
-    } else {
-      setProfile(null);
-    }
-  }, [user]);
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-    setSession(null);
     router.push("/login");
   };
 
@@ -116,11 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         profile,
-        session,
-        loading,
-        signIn,
         signOut,
-        refreshProfile,
+        loading,
       }}
     >
       {children}

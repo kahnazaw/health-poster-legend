@@ -1,42 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-
-// Health centers list - same as statistics page
-const healthCenters = [
-  "مركز صحي الحويجة",
-  "مركز صحي الرشيد",
-  "مركز صحي الشورجة",
-  "مركز صحي العباسية",
-  "مركز صحي الكرامة",
-  "مركز صحي المأمون",
-  "مركز صحي النصر",
-  "مركز صحي الهاشمية",
-  "مركز صحي الوحدة",
-  "مركز صحي الحرية",
-  "مركز صحي الشهداء",
-  "مركز صحي السلام",
-  "مركز صحي الجهاد",
-  "مركز صحي الفردوس",
-  "مركز صحي الزهراء",
-  "مركز صحي الإخاء",
-  "مركز صحي التضامن",
-  "مركز صحي الأمل",
-  "مركز صحي الفتح",
-  "مركز صحي النهضة",
-];
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [healthCenterName, setHealthCenterName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [success, setSuccess] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +34,6 @@ export default function SignupPage() {
 
     if (password.length < 6) {
       setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("كلمات المرور غير متطابقة");
       return;
     }
 
@@ -96,11 +65,18 @@ export default function SignupPage() {
 
       if (data.user) {
         // Profile will be created automatically by trigger
-        // Redirect to pending approval page
-        router.push("/pending-approval");
+        setSuccess(true);
+        setError("");
+        // Clear form
+        setFullName("");
+        setHealthCenterName("");
+        setEmail("");
+        setPassword("");
       }
     } catch (err) {
       setError("حدث خطأ غير متوقع");
+      setLoading(false);
+    } finally {
       setLoading(false);
     }
   };
@@ -114,13 +90,20 @@ export default function SignupPage() {
             <p className="text-gray-600">دائرة صحة كركوك - قطاع كركوك الأول</p>
           </div>
 
+          {success && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-center">
+              <p className="font-semibold">تم إنشاء الحساب بنجاح، وهو قيد المراجعة من الإدارة</p>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-6">
+          {!success && (
+            <form onSubmit={handleSignup} className="space-y-6">
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                 الاسم الرباعي <span className="text-red-500">*</span>
@@ -140,20 +123,15 @@ export default function SignupPage() {
               <label htmlFor="healthCenterName" className="block text-sm font-medium text-gray-700 mb-2">
                 اسم المركز الصحي <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
                 id="healthCenterName"
+                type="text"
                 value={healthCenterName}
                 onChange={(e) => setHealthCenterName(e.target.value)}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                <option value="">اختر المركز الصحي</option>
-                {healthCenters.map((center) => (
-                  <option key={center} value={center}>
-                    {center}
-                  </option>
-                ))}
-              </select>
+                placeholder="أدخل اسم المركز الصحي"
+              />
             </div>
 
             <div>
@@ -187,22 +165,6 @@ export default function SignupPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                تأكيد كلمة المرور <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="أعد إدخال كلمة المرور"
-              />
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -211,6 +173,7 @@ export default function SignupPage() {
               {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
             </button>
           </form>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
