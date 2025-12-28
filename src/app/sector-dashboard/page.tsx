@@ -182,6 +182,21 @@ export default function SectorDashboardPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "لوحة القطاع");
 
+    // Add official header rows
+    const monthNames = [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+    ];
+    const monthName = monthNames[parseInt(selectedMonth) - 1] || selectedMonth;
+    
+    // Insert header rows at the beginning
+    XLSX.utils.sheet_add_aoa(worksheet, [
+      ["دائرة صحة كركوك"],
+      ["قطاع كركوك الأول – وحدة تعزيز الصحة"],
+      [`لوحة متابعة إحصائيات المراكز الصحية - ${monthName} ${selectedYear}`],
+      [""], // Empty row
+    ], { origin: "A1" });
+
     // Set column widths
     const columnWidths = [
       { wch: 30 }, // اسم المركز الصحي
@@ -193,12 +208,15 @@ export default function SectorDashboardPage() {
     ];
     worksheet["!cols"] = columnWidths;
 
+    // Merge header cells for better appearance
+    if (!worksheet["!merges"]) worksheet["!merges"] = [];
+    worksheet["!merges"].push(
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Row 1
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Row 2
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }  // Row 3
+    );
+
     // Generate Excel file and download
-    const monthNames = [
-      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-    ];
-    const monthName = monthNames[parseInt(selectedMonth) - 1] || selectedMonth;
     const fileName = `لوحة_القطاع_${selectedYear}_${monthName}.xlsx`;
 
     XLSX.writeFile(workbook, fileName);
@@ -223,12 +241,31 @@ export default function SectorDashboardPage() {
   const totalCenters = submissions.length;
   const submissionRate = totalCenters > 0 ? Math.round((submittedCount / totalCenters) * 100) : 0;
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <main className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          لوحة القطاع - متابعة إحصائيات التوعية الصحية
-        </h1>
+    <main className="min-h-screen bg-gray-50">
+      {/* Official Header */}
+      <div className="bg-white border-b-2 border-emerald-600 py-6">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              دائرة صحة كركوك
+            </h2>
+            <p className="text-lg text-gray-700 mb-1">
+              قطاع كركوك الأول
+            </p>
+            <p className="text-base text-gray-600 mb-4">
+              وحدة تعزيز الصحة
+            </p>
+            <h1 className="text-xl font-semibold text-emerald-700 border-t border-gray-200 pt-4">
+              لوحة متابعة إحصائيات المراكز الصحية
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto py-8 px-4">
 
         {/* Filters and Summary */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -357,6 +394,21 @@ export default function SectorDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Official Footer */}
+      <footer className="bg-white border-t-2 border-gray-200 py-6 mt-12">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-sm text-gray-700 mb-2">
+            هذه البيانات أُعدّت وفق النموذج المعتمد من وزارة الصحة العراقية
+          </p>
+          <p className="text-xs text-gray-500 mb-1">
+            للاستخدام الرسمي فقط
+          </p>
+          <p className="text-xs text-gray-400">
+            © {currentYear} دائرة صحة كركوك
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }
