@@ -38,12 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         // Fallback to user metadata if profile doesn't exist yet
         const metadata = currentUser.user_metadata;
-        if (metadata && metadata.full_name && metadata.health_center_name) {
+        if (metadata?.full_name && metadata?.health_center_name) {
           setProfile({
-            full_name: metadata.full_name,
-            health_center_name: metadata.health_center_name,
+            full_name: String(metadata.full_name),
+            health_center_name: String(metadata.health_center_name),
             role: metadata.role === "admin" ? "admin" : "center_user",
-            is_approved: metadata.is_approved === true,
+            is_approved: Boolean(metadata.is_approved),
           });
         } else {
           setProfile(null);
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: data.full_name || "",
           health_center_name: data.health_center_name || "",
           role: (data.role === "admin" ? "admin" : "center_user") as "admin" | "center_user",
-          is_approved: data.is_approved === true,
+          is_approved: Boolean(data.is_approved),
         });
       } else {
         setProfile(null);

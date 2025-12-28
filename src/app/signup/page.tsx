@@ -92,7 +92,7 @@ export default function SignupPage() {
 
           {success && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-center">
-              <p className="font-semibold">تم إنشاء الحساب بنجاح، وهو قيد المراجعة من الإدارة</p>
+              <p className="font-semibold">تم إنشاء الحساب وهو قيد المراجعة من قبل الإدارة</p>
             </div>
           )}
 
