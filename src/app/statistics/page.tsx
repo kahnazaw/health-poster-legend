@@ -3,6 +3,22 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
+// Arabic month names (Iraqi traditional)
+const arabicMonths = [
+  "كانون الثاني",
+  "شباط",
+  "آذار",
+  "نيسان",
+  "أيار",
+  "حزيران",
+  "تموز",
+  "آب",
+  "أيلول",
+  "تشرين الأول",
+  "تشرين الثاني",
+  "كانون الأول"
+];
+
 // Health centers list - can be replaced with API/database later
 const healthCenters = [
   "مركز صحي الحويجة",
@@ -288,11 +304,7 @@ export default function StatisticsPage() {
     
     // Check for duplicate submission
     if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
-      const monthNames = [
-        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-      ];
-      const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+      const monthName = arabicMonths[parseInt(formData.month) - 1] || formData.month;
       setDuplicateError(
         `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن إرسال تقرير آخر لنفس الفترة.`
       );
@@ -332,11 +344,7 @@ export default function StatisticsPage() {
     
     // Check for duplicate submission
     if (isReportSubmitted(formData.healthCenterName, formData.month, formData.year)) {
-      const monthNames = [
-        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-      ];
-      const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+      const monthName = arabicMonths[parseInt(formData.month) - 1] || formData.month;
       setDuplicateError(
         `تم إرسال تقرير لهذا المركز الصحي (${formData.healthCenterName}) لشهر ${monthName} ${formData.year} مسبقاً. لا يمكن تصدير تقرير مكرر.`
       );
@@ -384,11 +392,7 @@ export default function StatisticsPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "إحصائيات التوعية الصحية");
 
     // Add official header rows
-    const monthNames = [
-      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-    ];
-    const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+    const monthName = arabicMonths[parseInt(formData.month) - 1] || formData.month;
     
     // Insert header rows at the beginning
     XLSX.utils.sheet_add_aoa(worksheet, [
@@ -493,23 +497,9 @@ export default function StatisticsPage() {
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const monthNum = String(i + 1).padStart(2, "0");
-                  const monthNames = [
-                    "يناير",
-                    "فبراير",
-                    "مارس",
-                    "أبريل",
-                    "مايو",
-                    "يونيو",
-                    "يوليو",
-                    "أغسطس",
-                    "سبتمبر",
-                    "أكتوبر",
-                    "نوفمبر",
-                    "ديسمبر",
-                  ];
                   return (
                     <option key={monthNum} value={monthNum}>
-                      {monthNames[i]}
+                      {arabicMonths[i]}
                     </option>
                   );
                 })}

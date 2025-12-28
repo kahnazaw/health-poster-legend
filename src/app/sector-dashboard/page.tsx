@@ -3,6 +3,22 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
+// Arabic month names (Iraqi traditional)
+const arabicMonths = [
+  "كانون الثاني",
+  "شباط",
+  "آذار",
+  "نيسان",
+  "أيار",
+  "حزيران",
+  "تموز",
+  "آب",
+  "أيلول",
+  "تشرين الأول",
+  "تشرين الثاني",
+  "كانون الأول"
+];
+
 // Health centers list - same as statistics page
 const healthCenters = [
   "مركز صحي الحويجة",
@@ -153,11 +169,7 @@ export default function SectorDashboardPage() {
     }> = [];
 
     submissions.forEach((submission) => {
-      const monthNames = [
-        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-      ];
-      const monthName = monthNames[parseInt(selectedMonth) - 1] || selectedMonth;
+      const monthName = arabicMonths[parseInt(selectedMonth) - 1] || selectedMonth;
       
       excelData.push({
         "اسم المركز الصحي": submission.centerName,
@@ -183,11 +195,7 @@ export default function SectorDashboardPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "لوحة القطاع");
 
     // Add official header rows
-    const monthNames = [
-      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-    ];
-    const monthName = monthNames[parseInt(selectedMonth) - 1] || selectedMonth;
+    const monthName = arabicMonths[parseInt(selectedMonth) - 1] || selectedMonth;
     
     // Insert header rows at the beginning
     XLSX.utils.sheet_add_aoa(worksheet, [
@@ -279,23 +287,9 @@ export default function SectorDashboardPage() {
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const monthNum = String(i + 1).padStart(2, "0");
-                  const monthNames = [
-                    "يناير",
-                    "فبراير",
-                    "مارس",
-                    "أبريل",
-                    "مايو",
-                    "يونيو",
-                    "يوليو",
-                    "أغسطس",
-                    "سبتمبر",
-                    "أكتوبر",
-                    "نوفمبر",
-                    "ديسمبر",
-                  ];
                   return (
                     <option key={monthNum} value={monthNum}>
-                      {monthNames[i]}
+                      {arabicMonths[i]}
                     </option>
                   );
                 })}
