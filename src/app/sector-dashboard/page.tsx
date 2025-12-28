@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -75,18 +78,48 @@ const parseReportKey = (key: string): { centerName: string; year: number; month:
   return { centerName, year, month };
 };
 
-const getFullReportData = (centerName: string, month: string, year: number): any => {
-  if (typeof window === "undefined") return null;
-  const dataKey = `health_report_data_${centerName}_${year}_${month}`;
-  const data = localStorage.getItem(dataKey);
-  if (data) {
-    try {
-      return JSON.parse(data);
-    } catch {
+const getFullReportData = async (centerName: string, month: string, year: number): Promise<any> => {
+  try {
+    const { data, error } = await supabase
+      .from("monthly_statistics")
+      .select("statistics_data, created_at")
+      .eq("health_center_name", centerName)
+      .eq("month", month)
+      .eq("year", year)
+      .single();
+
+    if (error || !data) {
+      // Fallback to localStorage
+      if (typeof window !== "undefined") {
+        const dataKey = `health_report_data_${centerName}_${year}_${month}`;
+        const localData = localStorage.getItem(dataKey);
+        if (localData) {
+          try {
+            return JSON.parse(localData);
+          } catch {
+            return null;
+          }
+        }
+      }
       return null;
     }
+
+    return data.statistics_data;
+  } catch {
+    // Fallback to localStorage
+    if (typeof window !== "undefined") {
+      const dataKey = `health_report_data_${centerName}_${year}_${month}`;
+      const localData = localStorage.getItem(dataKey);
+      if (localData) {
+        try {
+          return JSON.parse(localData);
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
   }
-  return null;
 };
 
 const calculateTotals = (reportData: any): { individualSessions: number; lectures: number; seminars: number } => {
@@ -116,47 +149,115 @@ export default function SectorDashboardPage() {
   );
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [submissions, setSubmissions] = useState<SubmissionStatus[]>([]);
+  const [categoryActivity, setCategoryActivity] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     loadSubmissions();
   }, [selectedMonth, selectedYear]);
 
-  const loadSubmissions = () => {
+  useEffect(() => {
+    calculateCategoryActivity();
+  }, [submissions, selectedMonth, selectedYear]);
+
+  const loadSubmissions = async () => {
     if (typeof window === "undefined") return;
 
-    const statuses: SubmissionStatus[] = healthCenters.map((center) => {
-      const key = getReportKey(center, selectedMonth, selectedYear);
-      const submissionData = localStorage.getItem(key);
-      
-      let submitted = false;
-      let submittedAt: string | undefined;
-      let totals = { individualSessions: 0, lectures: 0, seminars: 0 };
+    try {
+      // Load from database
+      const { data: dbData, error } = await supabase
+        .from("monthly_statistics")
+        .select("health_center_name, created_at, statistics_data")
+        .eq("month", selectedMonth)
+        .eq("year", selectedYear);
 
-      if (submissionData) {
-        try {
-          const parsed = JSON.parse(submissionData);
-          submitted = true;
-          submittedAt = parsed.submittedAt;
-          
-          // Try to get full report data for totals
-          const fullData = getFullReportData(center, selectedMonth, selectedYear);
-          if (fullData) {
-            totals = calculateTotals(fullData);
-          }
-        } catch {
-          submitted = false;
-        }
+      const dbSubmissions = new Map();
+      if (!error && dbData) {
+        dbData.forEach((record) => {
+          dbSubmissions.set(record.health_center_name, {
+            submitted: true,
+            submittedAt: record.created_at,
+            totals: calculateTotals(record.statistics_data),
+          });
+        });
       }
 
-      return {
-        centerName: center,
-        submitted,
-        submittedAt,
-        totals,
-      };
-    });
+      // Build statuses for all centers
+      const statuses: SubmissionStatus[] = await Promise.all(
+        healthCenters.map(async (center) => {
+          const dbRecord = dbSubmissions.get(center);
+          
+          if (dbRecord) {
+            return {
+              centerName: center,
+              submitted: true,
+              submittedAt: dbRecord.submittedAt,
+              totals: dbRecord.totals,
+            };
+          }
 
-    setSubmissions(statuses);
+          // Fallback to localStorage check
+          const key = getReportKey(center, selectedMonth, selectedYear);
+          const submissionData = localStorage.getItem(key);
+          
+          if (submissionData) {
+            try {
+              const parsed = JSON.parse(submissionData);
+              const fullData = await getFullReportData(center, selectedMonth, selectedYear);
+              return {
+                centerName: center,
+                submitted: true,
+                submittedAt: parsed.submittedAt,
+                totals: fullData ? calculateTotals(fullData) : { individualSessions: 0, lectures: 0, seminars: 0 },
+              };
+            } catch {
+              return {
+                centerName: center,
+                submitted: false,
+                totals: { individualSessions: 0, lectures: 0, seminars: 0 },
+              };
+            }
+          }
+
+          return {
+            centerName: center,
+            submitted: false,
+            totals: { individualSessions: 0, lectures: 0, seminars: 0 },
+          };
+        })
+      );
+
+      setSubmissions(statuses);
+    } catch (err) {
+      console.error("Error loading submissions:", err);
+      // Fallback to localStorage only
+      const statuses: SubmissionStatus[] = healthCenters.map((center) => {
+        const key = getReportKey(center, selectedMonth, selectedYear);
+        const submissionData = localStorage.getItem(key);
+        
+        let submitted = false;
+        let submittedAt: string | undefined;
+        let totals = { individualSessions: 0, lectures: 0, seminars: 0 };
+
+        if (submissionData) {
+          try {
+            const parsed = JSON.parse(submissionData);
+            submitted = true;
+            submittedAt = parsed.submittedAt;
+          } catch {
+            submitted = false;
+          }
+        }
+
+        return {
+          centerName: center,
+          submitted,
+          submittedAt,
+          totals,
+        };
+      });
+
+      setSubmissions(statuses);
+    }
   };
 
   const handleExportToExcel = () => {
@@ -268,7 +369,6 @@ export default function SectorDashboardPage() {
     .reverse();
 
   // Calculate category activity analysis
-  const categoryActivity: { [key: string]: number } = {};
   const categoryNames: { [key: string]: string } = {
     communicableDiseases: "الوقاية من الأمراض المعدية",
     nonCommunicableDiseases: "الوقاية من الأمراض غير المعدية",
@@ -282,30 +382,36 @@ export default function SectorDashboardPage() {
     healthEducation: "حملات التثقيف الصحي",
   };
 
-  submissions.forEach((submission) => {
-    if (submission.submitted) {
-      const fullData = getFullReportData(
-        submission.centerName,
-        selectedMonth,
-        selectedYear
-      );
-      if (fullData && fullData.categories) {
-        Object.entries(fullData.categories).forEach(([categoryKey, category]: [string, any]) => {
-          if (!categoryActivity[categoryKey]) {
-            categoryActivity[categoryKey] = 0;
-          }
-          Object.values(category).forEach((topic: any) => {
-            if (topic && typeof topic === "object") {
-              categoryActivity[categoryKey] +=
-                (topic.individualSessions || 0) +
-                (topic.lectures || 0) +
-                (topic.seminars || 0);
+  const calculateCategoryActivity = async () => {
+    const activity: { [key: string]: number } = {};
+
+    for (const submission of submissions) {
+      if (submission.submitted) {
+        const fullData = await getFullReportData(
+          submission.centerName,
+          selectedMonth,
+          selectedYear
+        );
+        if (fullData && fullData.categories) {
+          Object.entries(fullData.categories).forEach(([categoryKey, category]: [string, any]) => {
+            if (!activity[categoryKey]) {
+              activity[categoryKey] = 0;
             }
+            Object.values(category).forEach((topic: any) => {
+              if (topic && typeof topic === "object") {
+                activity[categoryKey] +=
+                  (topic.individualSessions || 0) +
+                  (topic.lectures || 0) +
+                  (topic.seminars || 0);
+              }
+            });
           });
-        });
+        }
       }
     }
-  });
+
+    setCategoryActivity(activity);
+  };
 
   const categoryData = Object.entries(categoryActivity)
     .map(([key, value]) => ({
@@ -330,12 +436,22 @@ export default function SectorDashboardPage() {
   ];
 
   const currentYear = new Date().getFullYear();
+  const { profile, signOut } = useAuth();
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <main className="min-h-screen bg-gray-50">
       {/* Official Header */}
       <div className="bg-white border-b-2 border-emerald-600 py-6">
         <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={signOut}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              تسجيل الخروج
+            </button>
+          </div>
           <div className="text-center">
             <div className="flex justify-center items-center mb-4">
               <img 
@@ -622,6 +738,7 @@ export default function SectorDashboardPage() {
         </div>
       </footer>
     </main>
+    </ProtectedRoute>
   );
 }
 
