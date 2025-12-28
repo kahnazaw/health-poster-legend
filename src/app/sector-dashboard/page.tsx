@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -239,7 +240,94 @@ export default function SectorDashboardPage() {
 
   const submittedCount = submissions.filter((s) => s.submitted).length;
   const totalCenters = submissions.length;
+  const notSubmittedCount = totalCenters - submittedCount;
   const submissionRate = totalCenters > 0 ? Math.round((submittedCount / totalCenters) * 100) : 0;
+
+  // Calculate center activity rankings
+  const centerActivity = submissions
+    .map((submission) => {
+      const totalActivity =
+        (submission.totals?.individualSessions || 0) +
+        (submission.totals?.lectures || 0) +
+        (submission.totals?.seminars || 0);
+      return {
+        centerName: submission.centerName,
+        totalActivity,
+        individualSessions: submission.totals?.individualSessions || 0,
+        lectures: submission.totals?.lectures || 0,
+        seminars: submission.totals?.seminars || 0,
+        submitted: submission.submitted,
+      };
+    })
+    .sort((a, b) => b.totalActivity - a.totalActivity);
+
+  const topPerformers = centerActivity.filter((c) => c.submitted).slice(0, 5);
+  const bottomPerformers = centerActivity
+    .filter((c) => c.submitted)
+    .slice(-5)
+    .reverse();
+
+  // Calculate category activity analysis
+  const categoryActivity: { [key: string]: number } = {};
+  const categoryNames: { [key: string]: string } = {
+    communicableDiseases: "الوقاية من الأمراض المعدية",
+    nonCommunicableDiseases: "الوقاية من الأمراض غير المعدية",
+    maternalChildHealth: "صحة الأم والطفل",
+    nutrition: "التثقيف الغذائي",
+    environmentalHealth: "الصحة البيئية",
+    schoolHealth: "برامج الصحة المدرسية",
+    mentalHealth: "تعزيز الصحة النفسية",
+    familyPlanning: "تنظيم الأسرة",
+    immunization: "التطعيم",
+    healthEducation: "حملات التثقيف الصحي",
+  };
+
+  submissions.forEach((submission) => {
+    if (submission.submitted) {
+      const fullData = getFullReportData(
+        submission.centerName,
+        selectedMonth,
+        selectedYear
+      );
+      if (fullData && fullData.categories) {
+        Object.entries(fullData.categories).forEach(([categoryKey, category]: [string, any]) => {
+          if (!categoryActivity[categoryKey]) {
+            categoryActivity[categoryKey] = 0;
+          }
+          Object.values(category).forEach((topic: any) => {
+            if (topic && typeof topic === "object") {
+              categoryActivity[categoryKey] +=
+                (topic.individualSessions || 0) +
+                (topic.lectures || 0) +
+                (topic.seminars || 0);
+            }
+          });
+        });
+      }
+    }
+  });
+
+  const categoryData = Object.entries(categoryActivity)
+    .map(([key, value]) => ({
+      name: categoryNames[key] || key,
+      value,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const totalActivity = centerActivity.reduce((sum, c) => sum + c.totalActivity, 0);
+
+  const COLORS = [
+    "#059669",
+    "#10b981",
+    "#34d399",
+    "#6ee7b7",
+    "#a7f3d0",
+    "#d1fae5",
+    "#ecfdf5",
+    "#f0fdf4",
+    "#f9fafb",
+    "#f3f4f6",
+  ];
 
   const currentYear = new Date().getFullYear();
 
@@ -325,6 +413,137 @@ export default function SectorDashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Summary Indicators */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 text-emerald-700">مؤشرات ملخصة</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="text-sm text-gray-600 mb-1">إجمالي المراكز الصحية</div>
+              <div className="text-3xl font-bold text-blue-600">{totalCenters}</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="text-sm text-gray-600 mb-1">المراكز التي أرسلت</div>
+              <div className="text-3xl font-bold text-green-600">{submittedCount}</div>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="text-sm text-gray-600 mb-1">المراكز التي لم ترسل</div>
+              <div className="text-3xl font-bold text-red-600">{notSubmittedCount}</div>
+            </div>
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+              <div className="text-sm text-gray-600 mb-1">نسبة الإرسال</div>
+              <div className="text-3xl font-bold text-emerald-600">{submissionRate}%</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center Activity Ranking */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 text-emerald-700">ترتيب نشاط المراكز</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-green-700">أعلى 5 مراكز أداء</h3>
+              {topPerformers.length > 0 ? (
+                <div className="space-y-2">
+                  {topPerformers.map((center, index) => (
+                    <div
+                      key={center.centerName}
+                      className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 bg-green-600 text-white rounded-full font-bold">
+                          {index + 1}
+                        </span>
+                        <span className="font-medium">{center.centerName}</span>
+                      </div>
+                      <span className="font-bold text-green-600">{center.totalActivity}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">لا توجد بيانات</p>
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-red-700">أقل 5 مراكز أداء</h3>
+              {bottomPerformers.length > 0 ? (
+                <div className="space-y-2">
+                  {bottomPerformers.map((center, index) => (
+                    <div
+                      key={center.centerName}
+                      className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 bg-red-600 text-white rounded-full font-bold">
+                          {bottomPerformers.length - index}
+                        </span>
+                        <span className="font-medium">{center.centerName}</span>
+                      </div>
+                      <span className="font-bold text-red-600">{center.totalActivity}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">لا توجد بيانات</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Category Activity Analysis */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 text-emerald-700">تحليل نشاط الفئات</h2>
+          {categoryData.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">إجمالي النشاط حسب الفئة</h3>
+                <div className="space-y-2">
+                  {categoryData.map((category, index) => {
+                    const percentage = totalActivity > 0 
+                      ? Math.round((category.value / totalActivity) * 100) 
+                      : 0;
+                    return (
+                      <div key={category.name} className="mb-3">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">{category.name}</span>
+                          <span className="text-sm font-bold text-emerald-600">
+                            {category.value} ({percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-emerald-600 h-2 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-3">رسم بياني</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={120}
+                      fontSize={10}
+                    />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#059669" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">لا توجد بيانات للتحليل</p>
+          )}
         </div>
 
         {/* Dashboard Table */}
