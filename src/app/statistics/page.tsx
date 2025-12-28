@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as XLSX from "xlsx";
 
 // Data structure matching the official Iraqi Ministry of Health monthly statistics form
 interface TopicStatistics {
@@ -207,11 +208,9 @@ export default function StatisticsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Prepare data for future Excel export
     const exportData = JSON.stringify(formData, null, 2);
     console.log("Statistics Data:", exportData);
-    // TODO: Implement Excel export functionality
-    alert("تم حفظ البيانات. سيتم إضافة وظيفة التصدير إلى Excel قريباً.");
+    alert("تم حفظ البيانات بنجاح.");
   };
 
   const calculateCategoryTotal = (categoryKey: keyof typeof formStructure) => {
@@ -223,6 +222,67 @@ export default function StatisticsPage() {
       total.seminars += topic.seminars;
     });
     return total;
+  };
+
+  const handleExportToExcel = () => {
+    // Prepare data for Excel export
+    const excelData: Array<{
+      "اسم المركز الصحي": string;
+      "الشهر": string;
+      "السنة": number;
+      "الفئة": string;
+      "الموضوع": string;
+      "جلسات فردية": number;
+      "محاضرات": number;
+      "ندوات": number;
+    }> = [];
+
+    // Add header information and all statistics
+    Object.entries(formStructure).forEach(([categoryKey, category]) => {
+      const categoryData = formData.categories[categoryKey as keyof typeof formStructure];
+      
+      category.topics.forEach((topic) => {
+        const topicData = categoryData[topic] || initialTopicStats;
+        excelData.push({
+          "اسم المركز الصحي": formData.healthCenterName || "",
+          "الشهر": formData.month,
+          "السنة": formData.year,
+          "الفئة": category.title,
+          "الموضوع": topic,
+          "جلسات فردية": topicData.individualSessions,
+          "محاضرات": topicData.lectures,
+          "ندوات": topicData.seminars,
+        });
+      });
+    });
+
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "إحصائيات التوعية الصحية");
+
+    // Set column widths for better readability
+    const columnWidths = [
+      { wch: 25 }, // اسم المركز الصحي
+      { wch: 10 }, // الشهر
+      { wch: 10 }, // السنة
+      { wch: 30 }, // الفئة
+      { wch: 35 }, // الموضوع
+      { wch: 15 }, // جلسات فردية
+      { wch: 12 }, // محاضرات
+      { wch: 12 }, // ندوات
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Generate Excel file and download
+    const monthNames = [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+    ];
+    const monthName = monthNames[parseInt(formData.month) - 1] || formData.month;
+    const fileName = `إحصائيات_التوعية_الصحية_${formData.year}_${monthName}.xlsx`;
+    
+    XLSX.writeFile(workbook, fileName);
   };
 
   return (
@@ -409,12 +469,19 @@ export default function StatisticsPage() {
           })}
 
           {/* Submit Button */}
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-4 flex-wrap">
             <button
               type="submit"
               className="px-8 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
             >
               حفظ البيانات
+            </button>
+            <button
+              type="button"
+              onClick={handleExportToExcel}
+              className="px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+            >
+              تصدير إلى Excel
             </button>
             <button
               type="button"
