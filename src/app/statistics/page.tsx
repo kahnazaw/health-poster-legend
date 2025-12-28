@@ -433,6 +433,13 @@ export default function StatisticsPage() {
       <div className="bg-white border-b-2 border-emerald-600 py-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center">
+            <div className="flex justify-center items-center mb-4">
+              <img 
+                src="/logo.png" 
+                alt="شعار دائرة صحة كركوك" 
+                className="h-20 w-auto object-contain"
+              />
+            </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               دائرة صحة كركوك
             </h2>
