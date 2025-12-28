@@ -187,10 +187,16 @@ const isReportSubmitted = (healthCenterName: string, month: string, year: number
   return localStorage.getItem(key) !== null;
 };
 
-const markReportAsSubmitted = (healthCenterName: string, month: string, year: number): void => {
+const markReportAsSubmitted = (healthCenterName: string, month: string, year: number, reportData?: MonthlyStatistics): void => {
   if (typeof window === "undefined") return;
   const key = getReportKey(healthCenterName, month, year);
   localStorage.setItem(key, JSON.stringify({ submittedAt: new Date().toISOString() }));
+  
+  // Also store full report data for dashboard
+  if (reportData) {
+    const dataKey = `health_report_data_${healthCenterName}_${year}_${month}`;
+    localStorage.setItem(dataKey, JSON.stringify(reportData));
+  }
 };
 
 export default function StatisticsPage() {
@@ -297,8 +303,8 @@ export default function StatisticsPage() {
     setValidationError("");
     setDuplicateError("");
     
-    // Mark report as submitted
-    markReportAsSubmitted(formData.healthCenterName, formData.month, formData.year);
+    // Mark report as submitted (with full data for dashboard)
+    markReportAsSubmitted(formData.healthCenterName, formData.month, formData.year, formData);
     
     const exportData = JSON.stringify(formData, null, 2);
     console.log("Statistics Data:", exportData);
