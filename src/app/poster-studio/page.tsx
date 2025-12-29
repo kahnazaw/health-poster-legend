@@ -205,30 +205,80 @@ export default function PosterStudioPage() {
           metadata: "وحدة تعزيز الصحة - القطاع الأول",
         });
       } else {
-        // PDF Export
+        // PDF Export - محسّن بدقة عالية
         const { default: html2canvas } = await import("html2canvas");
         const { default: jsPDF } = await import("jspdf");
 
-        const canvas = await html2canvas(posterRef.current, {
+        // التقاط الإنفوجرافيك بالكامل بدقة عالية
+        const element = posterRef.current;
+        const scale = 4; // دقة عالية جداً للطباعة
+
+        // استخدام type assertion لتجاوز قيود TypeScript
+        const canvas = await html2canvas(element, {
           useCORS: true,
           background: "#ffffff",
           logging: false,
-        });
+          allowTaint: true,
+          removeContainer: false,
+          scale: scale,
+          width: element.offsetWidth * scale,
+          height: element.offsetHeight * scale,
+        } as any);
 
-        const imgData = canvas.toDataURL("image/png", 1.0);
+        // تحويل Canvas إلى JPEG بجودة عالية (0.95)
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+        // إنشاء PDF بمقاس A4
         const pdf = new jsPDF({
           orientation: "portrait",
           unit: "mm",
           format: "a4",
         });
 
+        // حساب الأبعاد مع الحفاظ على Aspect Ratio
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const canvasAspectRatio = canvas.width / canvas.height;
+        const pageAspectRatio = pageWidth / pageHeight;
 
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        pdf.save(`إنفوجرافيك_${suggestedTitle || topic}_${Date.now()}.pdf`);
+        let imgWidth, imgHeight, xOffset, yOffset;
+
+        if (canvasAspectRatio > pageAspectRatio) {
+          // الصورة أوسع من الصفحة - نستخدم عرض الصفحة بالكامل
+          imgWidth = pageWidth;
+          imgHeight = pageWidth / canvasAspectRatio;
+          xOffset = 0;
+          yOffset = (pageHeight - imgHeight) / 2; // توسيط عمودي
+        } else {
+          // الصورة أطول من الصفحة - نستخدم ارتفاع الصفحة بالكامل
+          imgHeight = pageHeight;
+          imgWidth = pageHeight * canvasAspectRatio;
+          xOffset = (pageWidth - imgWidth) / 2; // توسيط أفقي
+          yOffset = 0;
+        }
+
+        // إضافة الصورة لتغطي كامل الصفحة مع الحفاظ على الأبعاد
+        pdf.addImage(imgData, "JPEG", xOffset, yOffset, imgWidth, imgHeight);
+
+        // إنشاء اسم ملف احترافي
+        const sanitizeFileName = (text: string) => {
+          return text
+            .replace(/[^\w\s-]/g, "") // إزالة الأحرف الخاصة
+            .replace(/\s+/g, "_") // استبدال المسافات بشرطة سفلية
+            .substring(0, 50); // تحديد الطول
+        };
+
+        const topicName = sanitizeFileName(suggestedTitle || topic || "إنفوجرافيك");
+        const centerName = healthCenterName
+          ? sanitizeFileName(healthCenterName)
+          : "قطاع_كركوك_الأول";
+        const fileName = `${topicName}-${centerName}-قطاع_كركوك_الأول.pdf`;
+
+        // حفظ الملف
+        pdf.save(fileName);
+
+        // رسالة نجاح
+        alert("✅ تم تحميل الإنفوجرافيك بنجاح!\n\n" + fileName);
       }
     } catch (error) {
       console.error("Error exporting poster:", error);
