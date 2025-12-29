@@ -512,7 +512,7 @@ export default function SectorDashboardPage() {
 
         <PageContainer maxWidth="xl">
         {/* Filters and Export Card */}
-        <SectionCard className="mb-6">
+        <SectionCard className="mb-4 md:mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
@@ -578,7 +578,7 @@ export default function SectorDashboardPage() {
         </SectionCard>
 
         {/* Summary Indicators with Approval Status - Enhanced */}
-        <SectionCard className="mb-6">
+        <SectionCard className="mb-4 md:mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -616,12 +616,12 @@ export default function SectorDashboardPage() {
         </SectionCard>
 
         {/* Rule-Based Insights Panel */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <InsightsPanel insights={insights} />
         </div>
 
         {/* Center Activity Ranking - Enhanced */}
-        <SectionCard className="mb-6">
+        <SectionCard className="mb-4 md:mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -695,7 +695,7 @@ export default function SectorDashboardPage() {
         </SectionCard>
 
         {/* Category Activity Analysis - Enhanced */}
-        <SectionCard className="mb-6">
+        <SectionCard className="mb-4 md:mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

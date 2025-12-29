@@ -76,12 +76,12 @@ export default function PosterPage() {
         title="نظام إنشاء البوسترات التوعوية"
         subtitle="إنشاء بوسترات توعوية احترافية بسهولة"
         showLogo={true}
-        logoSize="md"
+        logoSize="sm"
       />
 
-      <PageContainer maxWidth="xl">
+      <PageContainer maxWidth="lg">
         {/* Progress Steps */}
-        <SectionCard className="mb-6">
+        <SectionCard className="mb-4 md:mb-6">
           <div className="flex justify-between items-center relative">
             {steps.map((step, index) => {
               const stepNumber = getCurrentStepNumber();
@@ -121,18 +121,18 @@ export default function PosterPage() {
 
         {/* Success Message */}
         {exportComplete && (
-          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg flex items-center gap-3">
-            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-4 md:mb-6 p-3 md:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg flex items-center gap-3 shadow-sm">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <p className="text-green-800 font-semibold">تم تصدير البوستر بنجاح!</p>
+            <p className="text-sm md:text-base text-green-800 font-semibold">تم تصدير البوستر بنجاح!</p>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.6fr] gap-4 md:gap-6 mb-4 md:mb-6">
           {/* Left Column: Controls */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {currentStep === "select" && (
               <SectionCard>
                 <PosterTemplateSelector
@@ -180,10 +180,10 @@ export default function PosterPage() {
           <div className="lg:sticky lg:top-6 lg:self-start">
             {currentStep === "select" && (
               <SectionCard>
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">📋</div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">اختر موضوعًا للبدء</h3>
-                  <p className="text-gray-600">اختر موضوع التوعية من القائمة على اليسار</p>
+                <div className="text-center py-6 md:py-8">
+                  <div className="text-5xl md:text-6xl mb-3 md:mb-4">📋</div>
+                  <p className="text-base md:text-lg font-semibold text-gray-800 mb-2">اختر موضوعًا للبدء</p>
+                  <p className="text-sm md:text-base text-gray-600">اختر موضوع التوعية من القائمة على اليسار</p>
                 </div>
               </SectionCard>
             )}
@@ -204,7 +204,7 @@ export default function PosterPage() {
 
             {currentStep === "preview" && selectedTopic && (
               <SectionCard title="معاينة البوستر">
-                <div className="overflow-auto max-h-[800px] border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="overflow-auto max-h-[600px] md:max-h-[800px] border-2 border-gray-200 rounded-lg p-2 md:p-4 bg-gray-50">
                   <PosterPreview
                     ref={posterRef}
                     topic={selectedTopic}
@@ -218,12 +218,12 @@ export default function PosterPage() {
         </div>
 
         {/* Navigation Buttons */}
-        <SectionCard className="mt-6">
-          <div className="flex justify-between items-center">
+        <SectionCard className="mt-4 md:mt-6">
+          <div className="flex justify-between items-center gap-3">
             {currentStep !== "select" && (
               <button
                 onClick={handleBack}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+                className="px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 text-sm md:text-base"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -239,7 +239,7 @@ export default function PosterPage() {
             {currentStep === "edit" && (
               <button
                 onClick={handleNext}
-                className="ml-auto px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                className="ml-auto px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 text-sm md:text-base"
               >
                 معاينة
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +257,7 @@ export default function PosterPage() {
       </PageContainer>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-lg p-4 md:hidden z-40 no-print">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-xl p-3 md:hidden z-40 no-print safe-area-inset-bottom">
         {currentStep === "preview" && selectedTopic && (
           <PosterExportActions
             posterRef={posterRef}

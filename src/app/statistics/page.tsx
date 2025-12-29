@@ -378,24 +378,24 @@ export default function StatisticsPage() {
       
           {/* Report Status Display - Enhanced */}
           {!loadingReport && reportInfo && (
-            <div className={`bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6 border-l-4 ${
+            <SectionCard className={`mb-4 md:mb-6 border-l-4 ${
               reportInfo.status === "approved" 
-                ? "border-l-green-500 bg-gradient-to-r from-green-50 to-white" 
+                ? "border-l-green-500 bg-green-50" 
                 : reportInfo.status === "rejected"
-                ? "border-l-red-500 bg-gradient-to-r from-red-50 to-white"
+                ? "border-l-red-500 bg-red-50"
                 : reportInfo.status === "submitted"
-                ? "border-l-yellow-500 bg-gradient-to-r from-yellow-50 to-white"
-                : "border-l-gray-400 bg-gradient-to-r from-gray-50 to-white"
+                ? "border-l-yellow-500 bg-yellow-50"
+                : "border-l-gray-400 bg-gray-50"
             }`}>
-              <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
                 <StatusBadge status={reportInfo.status} size="lg" />
                 <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-1">
+                  <p className="font-bold text-base md:text-lg mb-1">
                     {reportInfo.status === "approved" && "تم اعتماد التقرير"}
                     {reportInfo.status === "rejected" && "تم رفض التقرير"}
                     {reportInfo.status === "submitted" && "قيد المراجعة"}
                     {reportInfo.status === "draft" && "مسودة"}
-                  </h3>
+                  </p>
                   {reportInfo.status === "approved" && reportInfo.approved_at && (
                     <p className="text-sm text-gray-600">
                       تم الاعتماد في: {new Date(reportInfo.approved_at).toLocaleDateString("ar-IQ")}
@@ -404,21 +404,21 @@ export default function StatisticsPage() {
                 </div>
               </div>
               {reportInfo.status === "rejected" && reportInfo.rejection_reason && (
-                <div className="mt-4 p-4 bg-white rounded-lg border-2 border-red-200">
-                  <p className="font-semibold text-red-800 mb-2 flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="mt-3 md:mt-4 p-3 md:p-4 bg-white rounded-lg border-l-4 border-red-500">
+                  <p className="font-semibold text-red-800 mb-1 md:mb-2 flex items-center gap-2 text-sm md:text-base">
+                    <svg className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     سبب الرفض:
                   </p>
-                  <p className="text-red-700">{reportInfo.rejection_reason}</p>
+                  <p className="text-xs md:text-sm text-red-700 leading-relaxed">{reportInfo.rejection_reason}</p>
                 </div>
               )}
               {reportInfo.status === "approved" && (
-                <div className="mt-4">
+                <div className="mt-3 md:mt-4">
                   <button
                     onClick={handleDownloadPDF}
-                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2"
+                    className="px-4 md:px-6 py-2.5 min-h-[44px] bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2 text-sm md:text-base"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -427,7 +427,7 @@ export default function StatisticsPage() {
                   </button>
                 </div>
               )}
-            </div>
+            </SectionCard>
           )}
 
           {/* Form Card */}

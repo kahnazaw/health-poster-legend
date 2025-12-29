@@ -228,16 +228,16 @@ export default function AdminAuditLogPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto py-8 px-4">
+        <PageContainer maxWidth="xl">
           {/* Filters Card */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
-            <div className="border-b border-gray-200 pb-4 mb-4">
-              <h2 className="text-lg font-bold text-emerald-700 flex items-center gap-2">
+          <SectionCard className="mb-4 md:mb-6 no-print">
+            <div className="border-b border-gray-200 pb-3 md:pb-4 mb-3 md:mb-4">
+              <p className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 تصفية السجلات
-              </h2>
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
@@ -297,18 +297,18 @@ export default function AdminAuditLogPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Audit Logs Table Card */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <SectionCard className="overflow-hidden">
             {loading ? (
               <LoadingSpinner size="md" text="جاري التحميل..." />
             ) : filteredLogs.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-center py-8 md:py-12 text-gray-500">
+                <svg className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <p className="text-lg font-medium">لا توجد سجلات تدقيق</p>
+                <p className="text-base md:text-lg font-medium">لا توجد سجلات تدقيق</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -368,24 +368,24 @@ export default function AdminAuditLogPage() {
                 </table>
               </div>
             )}
-          </div>
+          </SectionCard>
 
           {/* Info Box - Enhanced */}
-          <div className="mt-6 bg-white rounded-xl shadow-lg border border-gray-100 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500">
-            <div className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mt-4 md:mt-6 bg-blue-50 border-l-4 border-blue-500 p-3 md:p-4 rounded-lg shadow-sm no-print print-avoid-break">
+            <div className="flex items-start gap-2 md:gap-3">
+              <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <p className="text-sm font-semibold text-blue-900 mb-1">ملاحظة مهمة</p>
-                <p className="text-sm text-blue-800">
+                <p className="text-xs md:text-sm font-semibold text-blue-900 mb-1">ملاحظة مهمة</p>
+                <p className="text-xs md:text-sm text-blue-800 leading-relaxed">
                   هذا السجل للقراءة فقط. جميع الإجراءات الحساسة يتم تسجيلها تلقائياً
                   لضمان الشفافية والمساءلة.
                 </p>
               </div>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </main>
     </ProtectedRoute>
   );

@@ -125,6 +125,14 @@ button, a, [role="button"] {
   min-width: 44px;
 }
 
+/* Focus ring for keyboard/touch accessibility */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,

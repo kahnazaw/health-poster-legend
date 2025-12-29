@@ -66,29 +66,29 @@ export default function PosterTemplateSelector({
 }: PosterTemplateSelectorProps) {
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">اختر موضوع التوعية</h2>
-        <p className="text-gray-600">اختر الموضوع الذي تريد إنشاء بوستر توعوي عنه</p>
+      <div className="text-center mb-4 md:mb-6">
+        <p className="text-lg md:text-xl font-semibold text-gray-800 mb-1 md:mb-2">اختر موضوع التوعية</p>
+        <p className="text-sm md:text-base text-gray-600">اختر الموضوع الذي تريد إنشاء بوستر توعوي عنه</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         {posterTopics.map((topic) => {
           const isSelected = selectedTopic?.id === topic.id;
           return (
             <button
               key={topic.id}
               onClick={() => onSelectTopic(topic)}
-              className={`p-6 rounded-xl border-2 transition-all duration-200 text-right active:scale-[0.98] ${
+              className={`p-4 md:p-6 rounded-xl border-2 transition-all duration-200 text-right active:scale-[0.98] min-h-[44px] ${
                 isSelected
                   ? "border-emerald-500 bg-emerald-50 shadow-lg"
                   : "border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md"
               }`}
             >
-              <div className="flex items-start gap-4">
-                <div className="text-4xl flex-shrink-0">{topic.icon}</div>
+              <div className="flex items-start gap-3 md:gap-4">
+                <div className="text-3xl md:text-4xl flex-shrink-0">{topic.icon}</div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-gray-800 mb-2">{topic.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{topic.message}</p>
+                  <p className="font-bold text-base md:text-lg text-gray-800 mb-1 md:mb-2">{topic.title}</p>
+                  <p className="text-xs md:text-sm text-gray-600 line-clamp-2 leading-relaxed">{topic.message}</p>
                 </div>
                 {isSelected && (
                   <div className="flex-shrink-0">

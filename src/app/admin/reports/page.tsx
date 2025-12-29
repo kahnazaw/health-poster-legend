@@ -319,20 +319,20 @@ export default function AdminReportsPage() {
         <PageContainer maxWidth="xl">
           {/* Messages */}
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-800 flex items-center gap-3 shadow-md">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-800 flex items-center gap-3 shadow-sm">
+              <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {successMessage}
+              <p className="text-sm md:text-base font-semibold">{successMessage}</p>
             </div>
           )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-800 flex items-center gap-3 shadow-md">
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-800 flex items-center gap-3 shadow-sm">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {error}
+              <p className="text-sm md:text-base font-semibold">{error}</p>
             </div>
           )}
 
