@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { BarChart3, TrendingUp, Award, Download, Calendar, Users, Presentation, UsersRound } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart3, TrendingUp, Award, Download, Calendar, Users, Presentation, UsersRound, PieChart } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
+import { calculatePeriodScore } from "@/lib/analytics/scoringEngine";
 
 interface CenterStats {
   center_id: string;
@@ -12,6 +13,7 @@ interface CenterStats {
   total_meetings: number;
   total_lectures: number;
   total_seminars: number;
+  total_posters: number;
   score: number;
   rank: number;
 }
@@ -79,6 +81,7 @@ export default function AnalyticsPage() {
             total_meetings: 0,
             total_lectures: 0,
             total_seminars: 0,
+            total_posters: 0,
             score: 0,
             rank: 0,
           });
@@ -90,11 +93,35 @@ export default function AnalyticsPage() {
         center.total_seminars += stat.seminars || 0;
       });
 
-      // حساب النقاط لكل مركز
-      const centers = Array.from(centerMap.values()).map((center) => ({
-        ...center,
-        score: calculateScore(center.total_meetings, center.total_lectures, center.total_seminars),
-      }));
+      // جلب عدد البوسترات المولدة لكل مركز (من poster_analytics)
+      const { data: postersData } = await supabase
+        .from("poster_analytics")
+        .select("user_id")
+        .gte("generated_at", startDate.toISOString())
+        .lte("generated_at", today.toISOString());
+
+      // حساب عدد البوسترات لكل مركز
+      const postersMap = new Map<string, number>();
+      postersData?.forEach((poster: any) => {
+        const userId = poster.user_id;
+        postersMap.set(userId, (postersMap.get(userId) || 0) + 1);
+      });
+
+      // حساب النقاط لكل مركز باستخدام المعادلة الرسمية
+      const centers = Array.from(centerMap.values()).map((center) => {
+        const postersCount = postersMap.get(center.center_id) || 0;
+        const scoreResult = calculatePeriodScore({
+          totalMeetings: center.total_meetings,
+          totalLectures: center.total_lectures,
+          totalSeminars: center.total_seminars,
+          totalPosters: postersCount,
+        });
+        return {
+          ...center,
+          total_posters: postersCount,
+          score: scoreResult.normalizedScore,
+        };
+      });
 
       // ترتيب حسب النقاط
       centers.sort((a, b) => b.score - a.score);
@@ -160,11 +187,7 @@ export default function AnalyticsPage() {
     }
   };
 
-  const calculateScore = (meetings: number, lectures: number, seminars: number): number => {
-    // كل لقاء = 1 نقطة، كل محاضرة = 2 نقطة، كل ندوة = 3 نقاط
-    const score = meetings * 1 + lectures * 2 + seminars * 3;
-    return Math.min(score / 10, 100); // تطبيع إلى 0-100
-  };
+  // تم حذف calculateScore - نستخدم calculatePeriodScore مباشرة
 
   const handleExportReport = async (type: "weekly" | "monthly") => {
     // سيتم تنفيذ هذا لاحقاً
@@ -277,6 +300,7 @@ export default function AnalyticsPage() {
                       <th className="px-6 py-4 text-center font-black text-sm">اللقاءات</th>
                       <th className="px-6 py-4 text-center font-black text-sm">المحاضرات</th>
                       <th className="px-6 py-4 text-center font-black text-sm">الندوات</th>
+                      <th className="px-6 py-4 text-center font-black text-sm">البوسترات</th>
                       <th className="px-6 py-4 text-center font-black text-sm">النقاط</th>
                     </tr>
                   </thead>
@@ -308,6 +332,9 @@ export default function AnalyticsPage() {
                         </td>
                         <td className="px-6 py-4 text-center font-semibold text-gray-700">
                           {center.total_seminars}
+                        </td>
+                        <td className="px-6 py-4 text-center font-semibold text-gray-700">
+                          {center.total_posters || 0}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-black">

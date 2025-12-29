@@ -1,7 +1,10 @@
 /**
  * Topic Suggestions Engine - محرك الاقتراحات التلقائية للمواضيع الصحية
  * يقترح مواضيع بناءً على الموسم الحالي وملف الإحصائية الرسمي
+ * ويربط مع المواضيع الأكثر إحصاءً في النظام
  */
+
+import { supabase } from "@/lib/supabase";
 
 export interface TopicSuggestion {
   topic: string;
@@ -314,5 +317,87 @@ export function getSuggestionsByCategory(category: string): TopicSuggestion[] {
  */
 export function getOfficialCategories() {
   return OFFICIAL_CATEGORIES;
+}
+
+/**
+ * جلب المواضيع الأكثر إحصاءً (لربطها مع اقتراحات البوسترات)
+ */
+export async function getMostActiveTopics(days: number = 30): Promise<Array<{ topic: string; count: number; category: string }>> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+      .from("daily_statistics")
+      .select(`
+        topic_id,
+        individual_meetings,
+        lectures,
+        seminars,
+        health_topics!inner(topic_name, category_name)
+      `)
+      .gte("entry_date", startDateStr);
+
+    if (error) throw error;
+
+    // تجميع حسب الموضوع
+    const topicMap = new Map<string, { topic: string; count: number; category: string }>();
+
+    data?.forEach((stat: any) => {
+      const topicId = stat.topic_id;
+      const topicName = stat.health_topics?.topic_name || "غير معروف";
+      const category = stat.health_topics?.category_name || "عام";
+      const activity = (stat.individual_meetings || 0) + (stat.lectures || 0) + (stat.seminars || 0);
+
+      if (!topicMap.has(topicId)) {
+        topicMap.set(topicId, { topic: topicName, count: 0, category });
+      }
+
+      const topic = topicMap.get(topicId)!;
+      topic.count += activity;
+    });
+
+    // ترتيب حسب النشاط
+    return Array.from(topicMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // أعلى 5 مواضيع
+  } catch (error) {
+    console.error("Error fetching most active topics:", error);
+    return [];
+  }
+}
+
+/**
+ * توليد اقتراحات ذكية بناءً على النشاط الفعلي
+ */
+export async function generateSmartSuggestions(): Promise<TopicSuggestion[]> {
+  const seasonalSuggestions = generateSeasonalSuggestions();
+  const activeTopics = await getMostActiveTopics(30);
+
+  // دمج الاقتراحات الموسمية مع المواضيع النشطة
+  const smartSuggestions: TopicSuggestion[] = [];
+
+  // إضافة المواضيع النشطة كاقتراحات ذات أولوية عالية
+  activeTopics.forEach((activeTopic) => {
+    smartSuggestions.push({
+      topic: activeTopic.topic,
+      category: activeTopic.category.toLowerCase().replace(/\s+/g, "_"),
+      season: "all",
+      priority: "high",
+      description: `موضوع نشط - ${activeTopic.count} نشاط في آخر 30 يوم`,
+      officialCategory: activeTopic.category,
+    });
+  });
+
+  // إضافة الاقتراحات الموسمية
+  seasonalSuggestions.forEach((suggestion) => {
+    // تجنب التكرار
+    if (!smartSuggestions.some((s) => s.topic === suggestion.topic)) {
+      smartSuggestions.push(suggestion);
+    }
+  });
+
+  return smartSuggestions;
 }
 

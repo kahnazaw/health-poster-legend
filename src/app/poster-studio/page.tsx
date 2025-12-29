@@ -8,7 +8,7 @@ import { toPng } from "html-to-image";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAudit } from "@/lib/audit";
-import { generateSeasonalSuggestions, getOfficialCategories, type TopicSuggestion } from "@/lib/ai/topicSuggestions";
+import { generateSeasonalSuggestions, generateSmartSuggestions, getOfficialCategories, type TopicSuggestion } from "@/lib/ai/topicSuggestions";
 import { factCheckHealthPoints, type FactCheckResult } from "@/lib/ai/factChecker";
 import { generateMetadataBarcode } from "@/lib/utils/barcodeGenerator";
 
@@ -41,10 +41,13 @@ export default function PosterStudioPage() {
     }
   }, [profile]);
 
-  // تحميل الاقتراحات التلقائية عند تحميل الصفحة
+  // تحميل الاقتراحات التلقائية الذكية عند تحميل الصفحة
   useEffect(() => {
-    const seasonalSuggestions = generateSeasonalSuggestions();
-    setSuggestions(seasonalSuggestions);
+    const loadSuggestions = async () => {
+      const smartSuggestions = await generateSmartSuggestions();
+      setSuggestions(smartSuggestions);
+    };
+    loadSuggestions();
   }, []);
 
   // تعبئة الخيارات من URL parameters (من المعرض)
