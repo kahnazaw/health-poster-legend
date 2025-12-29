@@ -39,8 +39,8 @@ export default function ProtectedRoute({
     return null;
   }
 
-  // Block unapproved users - show message
-  if (profile && profile.is_approved === false) {
+  // Block unapproved users - show message (admin bypasses approval)
+  if (profile && profile.role !== "admin" && profile.is_approved === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="max-w-md w-full">
