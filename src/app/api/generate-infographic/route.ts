@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { researchHealthTopic, generateInfographicPrompt } from "@/lib/ai/researchEngine";
-import { generateImageWithGemini } from "@/lib/ai/geminiImageGenerator";
-import { mergeImageWithText } from "@/lib/ai/textOverlayEngine";
+import { researchHealthTopic } from "@/lib/ai/researchEngine";
+import { generateComponentIllustrations } from "@/lib/ai/componentImageGenerator";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, healthCenterName, language, layoutType, pointStyle } = body;
+    const { topic, healthCenterName, language } = body;
 
     if (!topic || !topic.trim()) {
       return NextResponse.json(
@@ -18,38 +17,21 @@ export async function POST(request: NextRequest) {
     // المرحلة الأولى: البحث والتلخيص
     const researchResult = await researchHealthTopic(topic, healthCenterName);
 
-    // المرحلة الثانية: توليد برومبت الإنفوجرافيك (خلفية صامتة)
-    const infographicPrompt = generateInfographicPrompt(
-      topic,
-      layoutType || "grid",
-      researchResult.microLearningPoints
-    );
-
-    // المرحلة الثالثة: توليد الصورة (خلفية صامتة فقط)
-    const backgroundImageUrl = await generateImageWithGemini(infographicPrompt);
-
-    // المرحلة الرابعة: دمج النصوص برمجياً
-    const finalImageUrl = await mergeImageWithText(
-      backgroundImageUrl,
-      {
-        type: layoutType || "grid",
-        points: researchResult.microLearningPoints,
-        title: researchResult.recommendedTitle,
-        healthCenterName: healthCenterName || "",
-      },
-      pointStyle || "numbered"
+    // المرحلة الثانية: توليد 3 صور كرتونية منفصلة
+    const illustrations = await generateComponentIllustrations(
+      researchResult.microLearningPoints,
+      topic
     );
 
     return NextResponse.json({
       success: true,
-      imageUrl: finalImageUrl,
-      backgroundImageUrl: backgroundImageUrl, // للرجوع إليها إذا لزم
+      illustrations: illustrations, // 3 صور منفصلة
       suggestedTitle: researchResult.recommendedTitle,
       microLearningPoints: researchResult.microLearningPoints,
       summary: researchResult.summary,
       sources: researchResult.sources,
-      prompt: infographicPrompt,
       healthCenterName: healthCenterName || "",
+      language: language || "ar",
     });
   } catch (error: any) {
     console.error("Error in generate-infographic API:", error);

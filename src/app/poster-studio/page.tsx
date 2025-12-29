@@ -16,7 +16,7 @@ export default function PosterStudioPage() {
   const [language, setLanguage] = useState<"ar" | "tr">("ar");
   const [layoutType, setLayoutType] = useState<"timeline" | "grid" | "central">("grid");
   const [pointStyle, setPointStyle] = useState<"numbered" | "bulleted" | "iconic">("numbered");
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [illustrations, setIllustrations] = useState<string[]>([]); // 3 صور منفصلة
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [suggestedTitle, setSuggestedTitle] = useState<string>("");
   const [microLearningPoints, setMicroLearningPoints] = useState<string[]>([]);
@@ -99,18 +99,6 @@ export default function PosterStudioPage() {
     generateQR();
   }, []);
 
-  // Auto-Contrast: حساب لون Overlay بناءً على لون الخلفية
-  const getOverlayContrast = (imageUrl: string | null): "light" | "dark" => {
-    // في الإنتاج الحقيقي، يمكن تحليل لون الصورة
-    // حالياً نستخدم منطق بسيط
-    if (!imageUrl) return "dark";
-    
-    // إذا كانت الصورة فاتحة، استخدم Overlay داكن والعكس
-    // يمكن تطوير هذا لتحليل فعلي للصورة
-    return "dark"; // افتراضي
-  };
-
-  const overlayStyle = getOverlayContrast(generatedImage);
 
   const handleGenerate = async () => {
     if (!topic || !topic.trim()) {
@@ -119,7 +107,7 @@ export default function PosterStudioPage() {
     }
 
     setIsGenerating(true);
-    setGeneratedImage(null);
+    setIllustrations([]);
     setSuggestedTitle("");
     setMicroLearningPoints([]);
     setSources([]);
@@ -135,8 +123,6 @@ export default function PosterStudioPage() {
           topic: topic.trim(),
           healthCenterName: healthCenterName || "",
           language,
-          layoutType,
-          pointStyle,
         }),
       });
 
@@ -146,7 +132,7 @@ export default function PosterStudioPage() {
       }
 
       const data = await response.json();
-      setGeneratedImage(data.imageUrl);
+      setIllustrations(data.illustrations || []); // 3 صور منفصلة
       setSuggestedTitle(data.suggestedTitle || "");
       setMicroLearningPoints(data.microLearningPoints || []);
       setSources(data.sources || []);
@@ -513,98 +499,107 @@ export default function PosterStudioPage() {
                 <h2 className="text-xl font-black text-gray-900 font-tajawal">معاينة البوستر</h2>
               </div>
 
-              {/* منطقة المعاينة مع الطبقات المتراكبة */}
+              {/* منطقة المعاينة - التصميم المكوّني */}
               <div
                 ref={posterRef}
-                className="relative w-full aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200"
+                className="relative w-full bg-white rounded-xl overflow-hidden border-2 border-gray-200"
+                style={{ minHeight: "800px" }}
               >
-                {/* الطبقة الخلفية - صورة الذكاء الاصطناعي */}
-                <div className="absolute inset-0">
-                  {generatedImage ? (
-                    <img
-                      src={generatedImage}
-                      alt="Generated Poster"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                      <div className="text-center">
-                        <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-400 font-medium">سيظهر البوستر المولد هنا</p>
+                {illustrations.length > 0 ? (
+                  <div className="w-full h-full flex flex-col">
+                    {/* الهيدر الرسمي */}
+                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-6 text-white">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-16 h-16 bg-white rounded-xl p-2 shadow-lg">
+                            <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-black font-tajawal">دائرة صحة كركوك</h2>
+                            <p className="text-sm font-bold opacity-90">القطاع الأول</p>
+                          </div>
+                        </div>
+                        {qrCodeUrl && (
+                          <div className="w-16 h-16 bg-white rounded-lg p-2 shadow-lg">
+                            <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                          </div>
+                        )}
+                      </div>
+                      {suggestedTitle && (
+                        <h1 className="text-3xl font-black font-tajawal text-center mt-4">
+                          {suggestedTitle}
+                        </h1>
+                      )}
+                    </div>
+
+                    {/* المحتوى الرئيسي - CSS Grid */}
+                    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 to-white">
+                      <div className="grid grid-cols-1 gap-8 max-w-5xl mx-auto">
+                        {illustrations.map((illustration, index) => (
+                          <div
+                            key={index}
+                            className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300"
+                          >
+                            {/* الصورة الكرتونية */}
+                            <div className="relative w-full h-64 bg-gradient-to-br from-emerald-50 to-blue-50">
+                              <img
+                                src={illustration}
+                                alt={`Illustration ${index + 1}`}
+                                className="w-full h-full object-contain p-4"
+                              />
+                            </div>
+                            {/* النص تحت الصورة */}
+                            <div className="p-6">
+                              <div
+                                className={`text-2xl font-black font-tajawal text-center ${
+                                  index === 0
+                                    ? "text-emerald-700"
+                                    : index === 1
+                                    ? "text-blue-700"
+                                    : "text-orange-600"
+                                }`}
+                              >
+                                {microLearningPoints[index] || ""}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* الطبقة العلوية - شريط الشعار مع Auto-Contrast */}
-                <div
-                  className={`absolute top-0 left-0 right-0 backdrop-blur-sm p-4 z-10 transition-all duration-300 ${
-                    overlayStyle === "dark"
-                      ? "bg-gradient-to-r from-emerald-600/95 to-emerald-700/95"
-                      : "bg-gradient-to-r from-white/95 to-white/95"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 bg-white rounded-lg p-1.5 shadow-sm">
-                        <Image src="/logo.png" alt="Logo" fill className="object-contain" />
-                      </div>
-                      <div className={overlayStyle === "dark" ? "text-white" : "text-gray-900"}>
-                        <p className="text-sm font-black">دائرة صحة كركوك</p>
-                        <p className="text-xs font-bold opacity-90">القطاع الأول</p>
+                    {/* التذييل الرسمي */}
+                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-white">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="text-center flex-1">
+                          <p className="text-sm font-bold">
+                            إعداد: {healthCenterName || "قطاع كركوك الأول"} - قطاع كركوك الأول
+                          </p>
+                          {sources.length > 0 && (
+                            <p className="text-xs text-gray-300 mt-2">
+                              المصدر: {sources.join(" / ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {language === "tr"
+                            ? "Kerkük Birinci Sektör Sağlık Müdürlüğü"
+                            : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
+                        </div>
                       </div>
                     </div>
-                    {/* QR Code في الزاوية */}
-                    {qrCodeUrl && (
-                      <div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm">
-                        <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                {/* الطبقة السفلية - التذييل الرسمي مع Auto-Contrast */}
-                <div
-                  className={`absolute bottom-0 left-0 right-0 backdrop-blur-sm p-4 z-10 transition-all duration-300 ${
-                    overlayStyle === "dark"
-                      ? "bg-gradient-to-r from-slate-800/95 to-slate-900/95"
-                      : "bg-gradient-to-r from-gray-900/95 to-black/95"
-                  }`}
-                >
-                  <div className="text-center space-y-2">
-                    {/* اسم المركز */}
-                    {healthCenterName && (
-                      <p className="text-white text-xs font-bold">
-                        {language === "tr"
-                          ? `Bu içerik ${healthCenterName} tarafından oluşturulmuştur`
-                          : `تم توليد هذا المحتوى التوعوي بواسطة: ${healthCenterName}`}
-                      </p>
-                    )}
-                    {/* الختم الرسمي */}
-                    <p className="text-white text-sm font-bold">
-                      {language === "tr"
-                        ? "Kerkük Birinci Sektör Sağlık Müdürlüğü Onaylı Sağlık Mesajı"
-                        : "رسالة صحية معتمدة من قطاع كركوك الأول"}
-                    </p>
-                    <p className="text-white/80 text-xs">
-                      {language === "tr"
-                        ? "Kerkük Sağlık Müdürlüğü - Sağlığı Geliştirme Birimi"
-                        : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
-                    </p>
-                    {/* المصادر */}
-                    {sources.length > 0 && (
-                      <p className="text-white/70 text-[10px] mt-2 border-t border-white/20 pt-2">
-                        {language === "tr"
-                          ? `Kaynak: ${sources.join(" / ")}`
-                          : `المصدر: ${sources.join(" / ")}`}
-                      </p>
-                    )}
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-[800px]">
+                    <div className="text-center">
+                      <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-400 font-medium">سيظهر الإنفوجرافيك المكوّني هنا</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* أزرار الإجراءات */}
-              {generatedImage && (
+                      {/* أزرار الإجراءات */}
+                      {illustrations.length > 0 && (
                 <div className="mt-4 space-y-3">
                   <div className="flex gap-3">
                     <button
