@@ -43,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               
               <div className="flex items-center gap-2">
+                <Link href="/health-pulse" className="hidden sm:block text-xs font-bold text-slate-600 px-4 hover:text-emerald-600 transition-colors">نبض الصحة</Link>
                 <Link href="/login" className="hidden sm:block text-xs font-bold text-slate-500 px-4">دخول</Link>
                 <Link href="/signup" className="bg-[#059669] text-white px-6 py-2 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-90 transition-transform whitespace-nowrap">ابدأ الآن</Link>
               </div>
