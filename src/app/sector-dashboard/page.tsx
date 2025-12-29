@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase";
 import StatusBadge from "@/components/StatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import InsightsPanel from "@/components/InsightsPanel";
+import { generateInsights } from "@/lib/insights/ruleBasedInsights";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -446,7 +448,29 @@ export default function SectorDashboardPage() {
     const pending = submissions.filter(s => s.status === "submitted").length;
     const percentage = total > 0 ? Math.round((approved / total) * 100) : 0;
     return { totalCenters: total, submittedCount: submitted, approvedCount: approved, rejectedCount: rejected, pendingCount: pending, completionPercentage: percentage };
-  }, [submissions]);
+  }, [submissions, healthCenters.length]);
+
+  // Generate rule-based insights - Memoized
+  const insights = useMemo(() => {
+    const expectedCenters = healthCenters;
+    const submittedCenters = submissions
+      .filter(s => s.submitted && s.status !== "draft")
+      .map(s => s.centerName);
+    
+    return generateInsights({
+      expectedCenters,
+      submittedCenters,
+      period: `${selectedMonth}-${selectedYear}`,
+      centerMetrics: submissions
+        .filter(s => s.submitted)
+        .map(s => ({
+          centerName: s.centerName,
+          current: (s.totals?.individualSessions || 0) + (s.totals?.lectures || 0) + (s.totals?.seminars || 0),
+          previous: 0, // Would need historical data
+          metric: "النشاط الإجمالي",
+        })),
+    });
+  }, [submissions, healthCenters, selectedMonth, selectedYear]);
 
   const COLORS = [
     "#059669",
@@ -613,6 +637,11 @@ export default function SectorDashboardPage() {
               <div className="text-4xl font-bold text-emerald-600">{completionPercentage}%</div>
             </div>
           </div>
+        </div>
+
+        {/* Rule-Based Insights Panel */}
+        <div className="mb-6">
+          <InsightsPanel insights={insights} />
         </div>
 
         {/* Center Activity Ranking - Enhanced */}

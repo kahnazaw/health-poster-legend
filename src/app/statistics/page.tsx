@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { generateApprovedReportPDF } from "@/lib/pdfGenerator";
 import { logAudit } from "@/lib/audit";
+import StatusBadge from "@/components/StatusBadge";
 
 /* =========================
    Constants
@@ -387,33 +388,7 @@ export default function StatisticsPage() {
                 : "border-l-gray-400 bg-gradient-to-r from-gray-50 to-white"
             }`}>
               <div className="flex items-center gap-4 mb-3">
-                <div className={`p-3 rounded-full ${
-                  reportInfo.status === "approved" ? "bg-green-100" :
-                  reportInfo.status === "rejected" ? "bg-red-100" :
-                  reportInfo.status === "submitted" ? "bg-yellow-100" :
-                  "bg-gray-100"
-                }`}>
-                  {reportInfo.status === "approved" && (
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {reportInfo.status === "rejected" && (
-                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                  {reportInfo.status === "submitted" && (
-                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                  {reportInfo.status === "draft" && (
-                    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  )}
-                </div>
+                <StatusBadge status={reportInfo.status} size="lg" />
                 <div className="flex-1">
                   <h3 className="font-bold text-xl mb-1">
                     {reportInfo.status === "approved" && "تم اعتماد التقرير"}
