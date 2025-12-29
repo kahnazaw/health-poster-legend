@@ -132,9 +132,15 @@ export default function PosterStudioPage() {
       }
 
       const data = await response.json();
-      setIllustrations(data.illustrations || []); // 3 صور منفصلة
+      // تحديث البيانات مع البنية الجديدة
+      setIllustrations(data.images || data.illustrations || []); // 3 صور منفصلة
       setSuggestedTitle(data.suggestedTitle || "");
-      setMicroLearningPoints(data.microLearningPoints || []);
+      // استخراج النصوص من points إذا كانت موجودة
+      if (data.points && Array.isArray(data.points)) {
+        setMicroLearningPoints(data.points.map((p: any) => p.text || p));
+      } else {
+        setMicroLearningPoints(data.microLearningPoints || []);
+      }
       setSources(data.sources || []);
 
       // تسجيل في Analytics
@@ -499,42 +505,44 @@ export default function PosterStudioPage() {
                 <h2 className="text-xl font-black text-gray-900 font-tajawal">معاينة البوستر</h2>
               </div>
 
-              {/* منطقة المعاينة - التصميم المكوّني */}
+              {/* منطقة المعاينة - إنفوجرافيك مكوّني احترافي */}
               <div
                 ref={posterRef}
-                className="relative w-full bg-white rounded-xl overflow-hidden border-2 border-gray-200"
-                style={{ minHeight: "800px" }}
+                id="infographic-canvas"
+                className="relative w-full bg-white rounded-xl overflow-hidden border-t-8 border-emerald-600 shadow-2xl"
+                style={{ minHeight: "900px" }}
               >
                 {illustrations.length > 0 ? (
                   <div className="w-full h-full flex flex-col">
-                    {/* الهيدر الرسمي */}
-                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-6 text-white">
-                      <div className="flex items-center justify-between mb-4">
+                    {/* الهيدر الرسمي لقطاع كركوك */}
+                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-8 text-white">
+                      <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                          <div className="relative w-16 h-16 bg-white rounded-xl p-2 shadow-lg">
+                          <div className="relative w-20 h-20 bg-white rounded-xl p-2 shadow-xl">
                             <Image src="/logo.png" alt="Logo" fill className="object-contain" />
                           </div>
                           <div>
-                            <h2 className="text-2xl font-black font-tajawal">دائرة صحة كركوك</h2>
-                            <p className="text-sm font-bold opacity-90">القطاع الأول</p>
+                            <h2 className="text-3xl font-black font-tajawal">دائرة صحة كركوك</h2>
+                            <p className="text-base font-bold opacity-90">القطاع الأول</p>
                           </div>
                         </div>
                         {qrCodeUrl && (
-                          <div className="w-16 h-16 bg-white rounded-lg p-2 shadow-lg">
+                          <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-xl">
                             <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
                           </div>
                         )}
                       </div>
                       {suggestedTitle && (
-                        <h1 className="text-3xl font-black font-tajawal text-center mt-4">
-                          {suggestedTitle}
-                        </h1>
+                        <div className="text-center mt-6">
+                          <h1 className="text-4xl font-black font-tajawal mb-2">{suggestedTitle}</h1>
+                          <p className="text-emerald-100 text-sm font-semibold">إرشادات صحية معتمدة</p>
+                        </div>
                       )}
                     </div>
 
-                    {/* المحتوى الرئيسي - CSS Grid مع تصميم مكوّني متقدم */}
-                    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    {/* شبكة المعلومات (3 بطاقات) - تصميم عصري */}
+                    <div className="flex-1 p-10 bg-gradient-to-br from-gray-50 via-white to-emerald-50/20">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
                         {illustrations.map((illustration, index) => {
                           // لوحة ألوان حيوية لكل بطاقة
                           const colorSchemes = [
@@ -562,40 +570,41 @@ export default function PosterStudioPage() {
                           return (
                             <div
                               key={index}
-                              className={`bg-white rounded-3xl overflow-hidden border-2 ${scheme.border} shadow-lg ${scheme.shadow} hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col`}
+                              className="flex flex-col items-center text-center p-6 bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
                             >
-                              {/* الصورة الكرتونية في الأعلى */}
-                              <div className={`relative w-full h-72 bg-gradient-to-br ${scheme.bg} flex items-center justify-center p-6`}>
+                              {/* الصورة الكرتونية المولدة - تصميم دائري احترافي */}
+                              <div className={`relative w-56 h-56 mb-6 rounded-full border-4 border-white shadow-xl bg-gradient-to-br ${scheme.bg} flex items-center justify-center overflow-hidden`}>
                                 <img
                                   src={illustration}
                                   alt={`Illustration ${index + 1}`}
-                                  className="w-full h-full object-contain drop-shadow-lg"
+                                  className="w-full h-full object-contain p-4"
                                 />
                               </div>
                               
-                              {/* النص العربي المصاغ باحترافية في الأسفل */}
-                              <div className="p-6 flex-1 flex items-center justify-center bg-white">
-                                <div
-                                  className={`text-xl md:text-2xl font-black font-tajawal text-center leading-relaxed ${scheme.text}`}
-                                  style={{
-                                    textShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                  }}
-                                >
-                                  {microLearningPoints[index] || ""}
-                                </div>
-                              </div>
+                              {/* النص العربي - يُكتب برمجياً لضمان الدقة (Vector) */}
+                              <p
+                                className={`text-xl font-black font-tajawal leading-relaxed ${scheme.text}`}
+                                style={{
+                                  textShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                  // ضمان أن النص متجه (Vector) وليس صورة
+                                  WebkitFontSmoothing: "antialiased",
+                                  MozOsxFontSmoothing: "grayscale",
+                                }}
+                              >
+                                {microLearningPoints[index] || ""}
+                              </p>
                             </div>
                           );
                         })}
                       </div>
                     </div>
 
-                    {/* التذييل الرسمي */}
+                    {/* تذييل رسمي يحمل اسم المركز والمصدر */}
                     <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-white">
-                      <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div className="text-center flex-1">
-                          <p className="text-sm font-bold">
-                            إعداد: {healthCenterName || "قطاع كركوك الأول"} - قطاع كركوك الأول
+                      <div className="flex justify-between items-center flex-wrap gap-4 text-sm">
+                        <div className="flex-1 text-center">
+                          <p className="font-bold mb-1">
+                            تم الإعداد بواسطة: {healthCenterName || "قطاع كركوك الأول"}
                           </p>
                           {sources.length > 0 && (
                             <p className="text-xs text-gray-300 mt-2">
@@ -603,7 +612,7 @@ export default function PosterStudioPage() {
                             </p>
                           )}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-gray-400 text-right">
                           {language === "tr"
                             ? "Kerkük Birinci Sektör Sağlık Müdürlüğü"
                             : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
@@ -612,7 +621,7 @@ export default function PosterStudioPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-[800px]">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-[900px]">
                     <div className="text-center">
                       <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-400 font-medium">سيظهر الإنفوجرافيك المكوّني هنا</p>
