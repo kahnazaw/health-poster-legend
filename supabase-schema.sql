@@ -109,6 +109,17 @@ CREATE POLICY "Admins can view all statistics"
     )
   );
 
+-- Policy: Admins can update all statistics (for approval/rejection)
+CREATE POLICY "Admins can update all statistics"
+  ON monthly_statistics FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
+
 -- Function to automatically create profile on user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
