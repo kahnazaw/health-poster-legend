@@ -9,6 +9,9 @@ import StatusBadge from "@/components/StatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StatusTimeline from "@/components/StatusTimeline";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import SectionCard from "@/components/layout/SectionCard";
 
 interface Report {
   id: string;
@@ -297,48 +300,23 @@ export default function AdminReportsPage() {
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
-        {/* Official Header - Enhanced */}
-        <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">لوحة مراجعة التقارير</h1>
-                  <p className="text-sm text-gray-600">مراجعة واعتماد التقارير الشهرية</p>
-                </div>
-              </div>
-              <button
-                onClick={signOut}
-                className="px-4 py-2 text-sm bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                تسجيل الخروج
-              </button>
-            </div>
-            <div className="text-center border-t border-gray-200 pt-4">
-              <div className="flex justify-center items-center mb-3">
-                <img
-                  src="/logo.png"
-                  alt="شعار دائرة صحة كركوك"
-                  className="h-16 w-auto object-contain"
-                />
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-1">
-                دائرة صحة كركوك
-              </h2>
-              <p className="text-base text-gray-700">قطاع كركوك الأول - وحدة تعزيز الصحة</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="لوحة مراجعة التقارير"
+          subtitle="مراجعة واعتماد التقارير الشهرية"
+          actions={
+            <button
+              onClick={signOut}
+              className="px-4 py-2 text-sm bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              تسجيل الخروج
+            </button>
+          }
+        />
 
-        <div className="max-w-7xl mx-auto py-8 px-4">
+        <PageContainer maxWidth="xl">
           {/* Messages */}
           {successMessage && (
             <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-800 flex items-center gap-3 shadow-md">
@@ -385,7 +363,7 @@ export default function AdminReportsPage() {
           </div>
 
           {/* Reports Table Card */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <SectionCard>
 
             {loading ? (
               <div className="space-y-4">
@@ -609,8 +587,7 @@ export default function AdminReportsPage() {
                 </div>
               </>
             )}
-          </div>
-        </div>
+          </SectionCard>
 
         {/* Reject Modal - Enhanced */}
         {showRejectModal && (
@@ -666,6 +643,7 @@ export default function AdminReportsPage() {
             </div>
           </div>
         )}
+        </PageContainer>
       </main>
     </ProtectedRoute>
   );

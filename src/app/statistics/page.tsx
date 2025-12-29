@@ -8,6 +8,9 @@ import { supabase } from "@/lib/supabase";
 import { generateApprovedReportPDF } from "@/lib/pdfGenerator";
 import { logAudit } from "@/lib/audit";
 import StatusBadge from "@/components/StatusBadge";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import SectionCard from "@/components/layout/SectionCard";
 
 /* =========================
    Constants
@@ -366,15 +369,12 @@ export default function StatisticsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["center_user"]}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 pb-24 md:pb-8">
-        <div className="max-w-5xl mx-auto dir-rtl" dir="rtl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-              إحصائيات المراكز الصحية
-            </h1>
-            <p className="text-gray-600">نظام إدارة وتتبع الإحصائيات الشهرية</p>
-          </div>
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-24 md:pb-8">
+        <PageHeader
+          title="إحصائيات المراكز الصحية"
+          subtitle="نظام إدارة وتتبع الإحصائيات الشهرية"
+        />
+        <PageContainer maxWidth="md" className="dir-rtl" dir="rtl">
       
           {/* Report Status Display - Enhanced */}
           {!loadingReport && reportInfo && (
@@ -555,8 +555,8 @@ export default function StatisticsPage() {
               مشروع إدارة إحصائيات المراكز الصحية - صحة كركوك
             </p>
           </div>
-        </div>
-      </div>
+        </PageContainer>
+      </main>
     </ProtectedRoute>
   );
 }

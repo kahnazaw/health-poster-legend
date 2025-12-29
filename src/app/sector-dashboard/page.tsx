@@ -11,6 +11,9 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import SkeletonLoader from "@/components/SkeletonLoader";
 import InsightsPanel from "@/components/InsightsPanel";
 import { generateInsights } from "@/lib/insights/ruleBasedInsights";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import SectionCard from "@/components/layout/SectionCard";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -491,21 +494,10 @@ export default function SectorDashboardPage() {
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
-      {/* Official Header - Enhanced */}
-      <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">لوحة متابعة الإحصائيات</h1>
-                <p className="text-sm text-gray-600">مراقبة وتتبع التقارير الشهرية</p>
-              </div>
-            </div>
+        <PageHeader
+          title="لوحة متابعة الإحصائيات"
+          subtitle="مراقبة وتتبع التقارير الشهرية"
+          actions={
             <button
               onClick={signOut}
               className="px-4 py-2 text-sm bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
@@ -515,28 +507,12 @@ export default function SectorDashboardPage() {
               </svg>
               تسجيل الخروج
             </button>
-          </div>
-          <div className="text-center border-t border-gray-200 pt-4">
-            <div className="flex justify-center items-center mb-3">
-              <img 
-                src="/logo.png" 
-                alt="شعار دائرة صحة كركوك" 
-                className="h-16 w-auto object-contain"
-              />
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-1">
-              دائرة صحة كركوك
-            </h2>
-            <p className="text-base text-gray-700">
-              قطاع كركوك الأول - وحدة تعزيز الصحة
-            </p>
-          </div>
-        </div>
-      </div>
+          }
+        />
 
-      <div className="max-w-7xl mx-auto py-8 px-4">
+        <PageContainer maxWidth="xl">
         {/* Filters and Export Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+        <SectionCard className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
@@ -599,10 +575,10 @@ export default function SectorDashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </SectionCard>
 
         {/* Summary Indicators with Approval Status - Enhanced */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+        <SectionCard className="mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -637,7 +613,7 @@ export default function SectorDashboardPage() {
               <div className="text-4xl font-bold text-emerald-600">{completionPercentage}%</div>
             </div>
           </div>
-        </div>
+        </SectionCard>
 
         {/* Rule-Based Insights Panel */}
         <div className="mb-6">
@@ -645,7 +621,7 @@ export default function SectorDashboardPage() {
         </div>
 
         {/* Center Activity Ranking - Enhanced */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+        <SectionCard className="mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -716,10 +692,10 @@ export default function SectorDashboardPage() {
               )}
             </div>
           </div>
-        </div>
+        </SectionCard>
 
         {/* Category Activity Analysis - Enhanced */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+        <SectionCard className="mb-6">
           <div className="border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -778,11 +754,12 @@ export default function SectorDashboardPage() {
           ) : (
             <p className="text-gray-500 text-center py-4">لا توجد بيانات للتحليل</p>
           )}
-        </div>
+        </SectionCard>
 
         {/* Dashboard Table - Mobile Cards / Desktop Table */}
-        {submissions.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
+        <SectionCard>
+          {submissions.length === 0 ? (
+            <div className="p-12 text-center">
             <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
@@ -887,10 +864,10 @@ export default function SectorDashboardPage() {
               </div>
             </div>
           </>
-        )}
-      </div>
+          )}
+        </SectionCard>
 
-      {/* Official Footer */}
+        {/* Official Footer */}
       <footer className="bg-white border-t-2 border-gray-200 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-sm text-gray-700 mb-2">
@@ -903,8 +880,9 @@ export default function SectorDashboardPage() {
             © {currentYear} دائرة صحة كركوك
           </p>
         </div>
-      </footer>
-    </main>
+        </footer>
+        </PageContainer>
+      </main>
     </ProtectedRoute>
   );
 }
