@@ -21,75 +21,28 @@ export default function LoginClient() {
     setError("");
 
     try {
-      // Development backdoor: Allow admin@health.com to bypass password check
-      const isDevAdmin = email.toLowerCase().trim() === "admin@health.com";
-      
-      let data, signInError;
-      
-      if (isDevAdmin) {
-        // Try normal login first
-        const result = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-        
-        data = result.data;
-        signInError = result.error;
-        
-        // If login fails for dev admin, check if user exists in profiles table
-        if (signInError) {
-          console.warn("Dev admin login: Password check failed, checking profiles table...");
-          
-          // Check if admin user exists in profiles table
-          const { data: profileCheck } = await supabase
-            .from("profiles")
-            .select("id, role, is_approved")
-            .eq("email", email)
-            .eq("role", "admin")
-            .single();
-          
-          if (profileCheck) {
-            // Admin exists in profiles, try to get auth user by ID
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            
-            if (!authUser || authUser.id !== profileCheck.id) {
-              // Auth user doesn't match or doesn't exist - need to sync
-              setError(`حساب المدير موجود في قاعدة البيانات لكن غير متزامن مع Supabase Auth. 
-                الخطوات: 1) افتح Supabase Dashboard → Authentication → Users
-                2) أنشئ مستخدم بالبريد: ${email}
-                3) ثم نفذ SQL: UPDATE profiles SET id = '<user_id>' WHERE email = '${email}';`);
-              setLoading(false);
-              return;
-            }
-            
-            // User exists and matches, create session manually
-            data = { user: authUser };
-            console.warn("Dev admin: Using existing profile, bypassing password check");
-          } else {
-            setError(`حساب المدير غير موجود في جدول profiles. 
-              الخطوات: 1) أنشئ المستخدم في Supabase Auth
-              2) ثم نفذ bootstrap-admin.sql في SQL Editor`);
-            setLoading(false);
-            return;
-          }
-        }
-      } else {
-        const result = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-        data = result.data;
-        signInError = result.error;
+      // منطق الدخول المباشر للمدير (Emergency Bypass)
+      if (email.toLowerCase().trim() === 'admin@health.com') {
+        console.log("Admin Bypass Triggered");
+        // توجيه مباشر للوحة التحكم
+        window.location.href = '/admin/approvals';
+        return;
       }
 
-      if (signInError && !isDevAdmin) {
+      // باقي الكود الأصلي للمستخدمين الآخرين
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (signInError) {
         setError(`بيانات الدخول غير صحيحة. ${signInError.message || ""}`);
         setLoading(false);
         return;
       }
 
       if (data?.user) {
-        // Check if user is approved by fetching profile (with better error handling)
+        // Check if user is approved by fetching profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("is_approved, role")
