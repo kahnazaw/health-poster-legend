@@ -27,29 +27,32 @@ export async function researchHealthTopic(
 
 1. البحث عن المعلومات الرسمية حول الموضوع: "${topic}"
 
-2. المصادر المعتمدة:
-   - وزارة الصحة العراقية (Iraq Ministry of Health)
-   - منظمة الصحة العالمية (WHO)
-   - إرشادات الصحة العامة للشرق الأوسط
+2. المصادر المعتمدة (ابحث في هذه المصادر بالترتيب):
+   - ملف نموذج احصائية.docx (إذا كان متوفراً في قاعدة البيانات)
+   - وزارة الصحة العراقية (Iraq Ministry of Health) - أحدث الإرشادات والتوصيات
+   - منظمة الصحة العالمية (WHO) - الإرشادات الدولية المحدثة
+   - إرشادات الصحة العامة للشرق الأوسط - السياق الإقليمي
 
 3. المطلوب:
    - ابحث عن أحدث المعلومات العلمية الرصينة (Evidence-based)
-   - حول المعلومات إلى 3 نقاط تعليمية قصيرة جداً (Micro-learning)
-   - كل نقطة يجب أن تكون جملة واحدة واضحة ومؤثرة (لا تتجاوز 15 كلمة)
    - ركز على المعلومات العملية القابلة للتطبيق في كركوك، العراق
+   - حول المعلومات إلى 3-4 نقاط تعليمية قصيرة جداً (Micro-learning)
+   - كل نقطة يجب أن تكون جملة واحدة واضحة ومؤثرة (لا تتجاوز 12 كلمة)
+   - استخدم لغة بسيطة وواضحة لعامة الناس
 
 4. التنسيق المطلوب:
    - النقطة الأولى: أهم معلومة وقائية أو توعوية
    - النقطة الثانية: معلومة عملية أو إجراء ملموس
    - النقطة الثالثة: نصيحة أو تذكير مهم
+   - النقطة الرابعة (اختياري): معلومة إضافية مهمة
 
-5. العنوان المقترح: اكتب عنواناً جذاباً ومختصراً (لا يتجاوز 8 كلمات)
+5. العنوان المقترح: اكتب عنواناً جذاباً ومختصراً (لا يتجاوز 6 كلمات)
 
-6. المصادر: اذكر المصادر الرسمية المستخدمة
+6. المصادر: اذكر المصادر الرسمية المستخدمة بوضوح
 
-أجب بالصيغة التالية (JSON):
+أجب بالصيغة التالية (JSON فقط، بدون نص إضافي):
 {
-  "microLearningPoints": ["النقطة الأولى", "النقطة الثانية", "النقطة الثالثة"],
+  "microLearningPoints": ["النقطة الأولى", "النقطة الثانية", "النقطة الثالثة", "النقطة الرابعة (إن وجدت)"],
   "summary": "ملخص قصير في جملة واحدة",
   "sources": ["المصدر الأول", "المصدر الثاني"],
   "recommendedTitle": "العنوان المقترح"
@@ -140,52 +143,59 @@ export async function researchHealthTopic(
 }
 
 /**
- * توليد برومبت إنفوجرافيك محسّن
+ * توليد برومبت إنفوجرافيك محسّن - خلفية صامتة بدون نصوص
  */
 export function generateInfographicPrompt(
   topic: string,
-  microLearningPoints: string[],
-  healthCenterName?: string
+  layoutType: "timeline" | "grid" | "central",
+  microLearningPoints: string[]
 ): string {
-  return `You are a World-Class Medical Infographic Designer specializing in Public Health Education for Iraq.
+  const layoutDescriptions = {
+    timeline: "a vertical timeline layout with 3-4 sequential steps, each with a clear icon and empty text box",
+    grid: "a modern grid layout with 2 columns and 2 rows, each section with an icon and empty text box",
+    central: "a central focus layout with one main section in the center and 2-3 supporting sections around it, each with icons and empty text boxes",
+  };
 
-Objective: Create a professional, evidence-based medical infographic poster for the 'Kirkuk Health Directorate - First Sector'.
+  return `You are a World-Class Medical Infographic Background Designer specializing in Public Health Education for Iraq.
+
+CRITICAL: Generate ONLY a SILENT BACKGROUND with NO TEXT. Text will be added programmatically later.
+
+Objective: Create a professional, evidence-based medical infographic BACKGROUND for the 'Kirkuk Health Directorate - First Sector'.
 
 Topic: ${topic}
 
-Micro-Learning Points (Must be clearly visible):
-1. ${microLearningPoints[0] || "معلومة صحية مهمة"}
-2. ${microLearningPoints[1] || "إجراء وقائي ضروري"}
-3. ${microLearningPoints[2] || "نصيحة صحية قيمة"}
+Layout Type: ${layoutDescriptions[layoutType]}
 
 Visual Requirements:
 - Modern Flat Design style (no 3D, no shadows, clean lines)
-- Each learning point must have its own clear icon/illustration
-- Use a grid layout with 3-4 distinct sections
-- Leave strategic space at top (20%) for official header
-- Leave strategic space at bottom (25%) for footer with health center name and sources
+- SILENT BACKGROUND: Only icons, shapes, and empty organized boxes (3-4 sections)
+- NO TEXT in the image - leave empty text boxes/areas for programmatic text overlay
 - Use medical icons that are culturally appropriate for Middle East
-- Colors: Professional medical palette (emerald green #059669, white, soft grays)
-- Typography: Clear, readable Arabic-friendly fonts
+- Colors: Professional medical palette (emerald green #059669, white, soft grays, light blues)
 - Icons: Simple, flat, vector-style medical icons
+- Background: Clean, light background (white or very light gray)
 
-Composition:
-- Top section: Main title/header area (reserved for official logo)
-- Middle section: 3-4 visual learning points with icons and short text
-- Bottom section: Footer with health center name and official sources (reserved space)
+Composition Structure:
+- Top 20%: Empty header area (reserved for official logo and title - will be added programmatically)
+- Middle 60%: ${layoutType === "timeline" ? "Vertical timeline with 3-4 empty text boxes and icons" : layoutType === "grid" ? "Grid layout with 3-4 empty text boxes and icons" : "Central focus with main empty box in center and 2-3 supporting empty boxes around it"}
+- Bottom 20%: Empty footer area (reserved for health center name and sources - will be added programmatically)
+
+Each section must have:
+- A clear medical icon/illustration
+- An empty text box/area (rectangular or rounded) ready for text overlay
+- Proper spacing and organization
 
 Cultural Context:
 - Reflect Iraqi/Kirkuk healthcare setting
 - Use appropriate medical symbols for Middle East
-- Ensure all text areas are clearly readable
 
-Avoid:
-- Cluttered designs
-- 3D effects or shadows
-- Generic Western healthcare imagery
-- Text that's too small to read
-- Overlapping elements
+CRITICAL RULES:
+- DO NOT include any Arabic text in the image
+- DO NOT write any words or sentences
+- ONLY create empty text boxes and icons
+- Leave clear spaces for text overlay
+- Make it look professional and organized
 
-Generate a clean, educational, professional medical infographic that teaches the 3 micro-learning points clearly.`;
+Generate a clean, silent, professional medical infographic background with organized empty text boxes and medical icons.`;
 }
 

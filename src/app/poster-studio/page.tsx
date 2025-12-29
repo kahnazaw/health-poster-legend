@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Image as ImageIcon, Palette, Users, Zap, Download, Globe, QrCode, Search, Building2, BookOpen } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Palette, Zap, Download, Globe, QrCode, Search, Building2, BookOpen, LayoutGrid, Clock, Target, List, Hash, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { generateQRCodeDataUrl } from "@/lib/utils/qrCodeGenerator";
 import { toPng } from "html-to-image";
@@ -14,6 +14,8 @@ export default function PosterStudioPage() {
   const [topic, setTopic] = useState("");
   const [healthCenterName, setHealthCenterName] = useState("");
   const [language, setLanguage] = useState<"ar" | "tr">("ar");
+  const [layoutType, setLayoutType] = useState<"timeline" | "grid" | "central">("grid");
+  const [pointStyle, setPointStyle] = useState<"numbered" | "bulleted" | "iconic">("numbered");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [suggestedTitle, setSuggestedTitle] = useState<string>("");
@@ -30,7 +32,7 @@ export default function PosterStudioPage() {
     }
   }, [profile]);
 
-  // تعبئة الخيارات من URL parameters (من المعرض) - للتوافق مع النظام القديم
+  // تعبئة الخيارات من URL parameters (من المعرض)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -42,30 +44,46 @@ export default function PosterStudioPage() {
     }
   }, []);
 
-  const campaignTypes = [
-    { value: "vaccination", label: "حملة تلقيح" },
-    { value: "health_awareness", label: "توعية صحية" },
-    { value: "administrative", label: "إعلان إداري" },
-    { value: "prevention", label: "الوقاية من الأمراض" },
-    { value: "nutrition", label: "التغذية الصحية" },
-    { value: "maternal_health", label: "صحة الأم والطفل" },
+  const layoutOptions = [
+    { 
+      value: "timeline" as const, 
+      label: "المسار الزمني", 
+      icon: <Clock className="w-5 h-5" />,
+      desc: "للنصائح المتسلسلة"
+    },
+    { 
+      value: "grid" as const, 
+      label: "الشبكة الحديثة", 
+      icon: <LayoutGrid className="w-5 h-5" />,
+      desc: "للمعلومات المتعددة"
+    },
+    { 
+      value: "central" as const, 
+      label: "التركيز المركزي", 
+      icon: <Target className="w-5 h-5" />,
+      desc: "لموضوع أساسي واحد"
+    },
   ];
 
-  const targetAudiences = [
-    { value: "children", label: "أطفال" },
-    { value: "elderly", label: "كبار السن" },
-    { value: "medical_staff", label: "الطاقم الطبي" },
-    { value: "general_public", label: "عامة الناس" },
-    { value: "women", label: "النساء" },
-    { value: "youth", label: "الشباب" },
-  ];
-
-  const visualStyles = [
-    { value: "official_trusted", label: "رسمي وموثوق" },
-    { value: "friendly_cartoon", label: "ودي كرتوني (للأطفال)" },
-    { value: "modern_infographic", label: "إنفوجرافيك حديث" },
-    { value: "minimalist", label: "تصميم بسيط وأنيق" },
-    { value: "vibrant", label: "ملون وجذاب" },
+  const pointStyleOptions = [
+    { 
+      value: "numbered" as const, 
+      label: "رقمية", 
+      icon: <Hash className="w-4 h-4" />,
+      example: "1. النقطة الأولى"
+    },
+    { 
+      value: "bulleted" as const, 
+      label: "نقطية", 
+      icon: <List className="w-4 h-4" />,
+      example: "• النقطة الأولى"
+    },
+    { 
+      value: "iconic" as const, 
+      label: "أيقونية", 
+      icon: <CheckCircle className="w-4 h-4" />,
+      example: "✓ النقطة الأولى"
+    },
   ];
 
   // توليد QR Code عند تحميل الصفحة
@@ -117,6 +135,8 @@ export default function PosterStudioPage() {
           topic: topic.trim(),
           healthCenterName: healthCenterName || "",
           language,
+          layoutType,
+          pointStyle,
         }),
       });
 

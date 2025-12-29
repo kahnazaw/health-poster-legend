@@ -7,9 +7,8 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // توجيه مباشر إلى لوحة التحكم (Dashboard)
-    // يمكن تغيير المسار حسب الحاجة: /sector-dashboard أو /admin/approvals
-    router.replace("/sector-dashboard");
+    // توجيه مباشر إلى استوديو التصميم (Poster Studio)
+    router.replace("/poster-studio");
   }, [router]);
 
   // عرض شاشة تحميل أثناء التوجيه
