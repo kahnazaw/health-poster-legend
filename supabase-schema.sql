@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL,
   full_name TEXT NOT NULL,
   health_center_id UUID REFERENCES health_centers(id),
-  health_center_name TEXT NOT NULL,
+  health_center_name TEXT DEFAULT '', -- Made optional (can be empty)
   role TEXT NOT NULL CHECK (role IN ('admin', 'center_user')) DEFAULT 'center_user',
   is_approved BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -129,7 +129,7 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'health_center_name', ''),
+    COALESCE(NULLIF(NEW.raw_user_meta_data->>'health_center_name', ''), ''), -- Optional: defaults to empty string
     COALESCE(NEW.raw_user_meta_data->>'role', 'center_user'),
     false
   );

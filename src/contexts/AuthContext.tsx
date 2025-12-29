@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 export interface Profile {
   full_name: string;
-  health_center_name: string;
+  health_center_name: string; // Optional - can be empty string
   role: "admin" | "center_user";
   is_approved: boolean;
 }

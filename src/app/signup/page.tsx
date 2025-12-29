@@ -6,7 +6,6 @@ import { logAudit } from "@/lib/audit";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
-  const [healthCenterName, setHealthCenterName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,11 +19,6 @@ export default function SignupPage() {
     // Validation
     if (!fullName.trim()) {
       setError("يرجى إدخال الاسم الرباعي");
-      return;
-    }
-
-    if (!healthCenterName.trim()) {
-      setError("يرجى إدخال اسم المركز الصحي");
       return;
     }
 
@@ -47,7 +41,7 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: fullName,
-            health_center_name: healthCenterName,
+            health_center_name: "", // Optional - empty by default
             role: "center_user",
             is_approved: false,
           },
@@ -72,7 +66,6 @@ export default function SignupPage() {
         setError("");
         // Clear form
         setFullName("");
-        setHealthCenterName("");
         setEmail("");
         setPassword("");
       }
@@ -119,21 +112,6 @@ export default function SignupPage() {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 placeholder="أدخل الاسم الرباعي"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="healthCenterName" className="block text-sm font-medium text-gray-700 mb-2">
-                اسم المركز الصحي <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="healthCenterName"
-                type="text"
-                value={healthCenterName}
-                onChange={(e) => setHealthCenterName(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="أدخل اسم المركز الصحي"
               />
             </div>
 

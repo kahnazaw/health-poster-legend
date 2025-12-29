@@ -100,16 +100,6 @@ export default function StatisticsWizard({
             <h2 className="text-2xl font-bold text-gray-800 mb-6">معلومات التقرير</h2>
             <div className="space-y-4">
               <div>
-                <label className="block mb-2 font-semibold text-gray-700">اسم المركز الصحي:</label>
-                <input
-                  type="text"
-                  value={healthCenterName}
-                  disabled
-                  readOnly
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-gray-700"
-                />
-              </div>
-              <div>
                 <label className="block mb-2 font-semibold text-gray-700">الشهر:</label>
                 <input
                   type="text"

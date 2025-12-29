@@ -82,7 +82,7 @@ export default function StatisticsPage() {
   // Load existing report status
   useEffect(() => {
     const loadReportStatus = async () => {
-      if (!user || !profile || !profile.health_center_name) {
+      if (!user || !profile) {
         setLoadingReport(false);
         return;
       }
@@ -152,8 +152,8 @@ export default function StatisticsPage() {
     }
   }, [user, profile, selectedMonth, currentYear, loading]);
 
-  // Security guard: Block page if health_center_name is missing
-  if (!loading && (!user || !profile || !profile.health_center_name || profile.health_center_name.trim() === "")) {
+  // Security guard: Block page if user/profile is missing (health_center_name is now optional)
+  if (!loading && (!user || !profile)) {
     return (
       <ProtectedRoute allowedRoles={["center_user"]}>
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
@@ -213,8 +213,8 @@ export default function StatisticsPage() {
         const data = XLSX.utils.sheet_to_json(ws);
         console.log("Data from Excel:", data);
         
-        // Always use profile.health_center_name (ignore any form-based center value)
-        const healthCenterName = profile.health_center_name;
+        // Use profile.health_center_name if available, otherwise use empty string
+        const healthCenterName = profile.health_center_name || "";
         
         // Convert month name to number (1-12)
         const monthIndex = arabicMonths.indexOf(selectedMonth);
@@ -440,24 +440,7 @@ export default function StatisticsPage() {
                 معلومات التقرير
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* اسم المركز الصحي (قراءة فقط) */}
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  اسم المركز الصحي
-                </label>
-                <input
-                  type="text"
-                  value={profile?.health_center_name || ""}
-                  disabled
-                  readOnly
-                  className="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* اختيار الشهر */}
               <div>
                 <label className="block mb-2 font-semibold text-gray-700 flex items-center gap-2">
