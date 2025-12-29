@@ -18,7 +18,6 @@ interface AuditLog {
   details: any;
   timestamp: string;
   user_name: string | null;
-  health_center_name: string | null;
 }
 
 const actionLabels: { [key: string]: string } = {
@@ -92,18 +91,18 @@ export default function AdminAuditLogPage() {
 
       // Fetch user profiles
       const userIdsArray = Array.from(userIds);
-      let profilesMap = new Map<string, { full_name: string; health_center_name: string }>();
+      let profilesMap = new Map<string, { full_name: string }>();
 
       if (userIdsArray.length > 0) {
         const { data: profilesData } = await supabase
           .from("profiles")
-          .select("id, full_name, health_center_name")
+          .select("id, full_name")
           .in("id", userIdsArray);
 
         profilesMap = new Map(
           profilesData?.map((p) => [
             p.id,
-            { full_name: p.full_name, health_center_name: p.health_center_name },
+            { full_name: p.full_name },
           ]) || []
         );
       }
@@ -115,8 +114,6 @@ export default function AdminAuditLogPage() {
           return {
             ...log,
             user_name: profile?.full_name || null,
-            health_center_name:
-              log.details?.health_center_name || profile?.health_center_name || null,
           };
         })
         .filter((log) => {
@@ -317,7 +314,6 @@ export default function AdminAuditLogPage() {
                     <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
                       <th className="px-6 py-4 text-right text-sm font-bold">التاريخ والوقت</th>
                       <th className="px-6 py-4 text-right text-sm font-bold">المستخدم</th>
-                      <th className="px-6 py-4 text-right text-sm font-bold">المركز الصحي</th>
                       <th className="px-6 py-4 text-right text-sm font-bold">الإجراء</th>
                       <th className="px-6 py-4 text-right text-sm font-bold">التفاصيل</th>
                     </tr>
@@ -333,9 +329,6 @@ export default function AdminAuditLogPage() {
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-gray-800">
                           {log.user_name || "غير معروف"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {log.health_center_name || "-"}
                         </td>
                         <td className="px-6 py-4">
                           <span

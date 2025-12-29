@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import { logAudit } from "./audit";
 
 interface ReportData {
-  healthCenterName: string;
+  healthCenterName?: string; // Optional - can be empty
   month: string;
   year: number;
   statisticsData: any;
@@ -61,8 +61,10 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
   // Report Details
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  addText(`اسم المركز الصحي: ${data.healthCenterName}`, pageWidth - margin, yPos);
-  yPos += 7;
+  if (data.healthCenterName) {
+    addText(`اسم المركز الصحي: ${data.healthCenterName}`, pageWidth - margin, yPos);
+    yPos += 7;
+  }
   addText(`الشهر: ${data.month}`, pageWidth - margin, yPos);
   yPos += 7;
   addText(`السنة: ${data.year}`, pageWidth - margin, yPos);
@@ -167,7 +169,8 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
   }
 
   // Save PDF
-  const fileName = `تقرير_${data.healthCenterName}_${data.month}_${data.year}.pdf`;
+  const centerName = data.healthCenterName || "عام";
+  const fileName = `تقرير_${centerName}_${data.month}_${data.year}.pdf`;
   doc.save(fileName);
 
   // Log audit event for PDF generation
@@ -178,7 +181,6 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
       details: {
         month: data.month,
         year: data.year,
-        health_center_name: data.healthCenterName,
       },
     });
   }

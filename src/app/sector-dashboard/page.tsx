@@ -87,20 +87,29 @@ const parseReportKey = (key: string): { centerName: string; year: number; month:
   return { centerName, year, month };
 };
 
-const getFullReportData = async (centerName: string, month: string, year: number): Promise<any> => {
+const getFullReportData = async (userName: string, month: string, year: number): Promise<any> => {
   try {
+    // Get user ID from profile name
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("full_name", userName)
+      .single();
+    
+    if (!profileData) return null;
+
     const { data, error } = await supabase
       .from("monthly_statistics")
       .select("statistics_data, created_at")
-      .eq("health_center_name", centerName)
+      .eq("user_id", profileData.id)
       .eq("month", month)
       .eq("year", year)
       .single();
 
     if (error || !data) {
-      // Fallback to localStorage
+      // Fallback to localStorage using user ID
       if (typeof window !== "undefined") {
-        const dataKey = `health_report_data_${centerName}_${year}_${month}`;
+        const dataKey = `health_report_data_${profileData.id}_${year}_${month}`;
         const localData = localStorage.getItem(dataKey);
         if (localData) {
           try {
@@ -115,18 +124,6 @@ const getFullReportData = async (centerName: string, month: string, year: number
 
     return data.statistics_data;
   } catch {
-    // Fallback to localStorage
-    if (typeof window !== "undefined") {
-      const dataKey = `health_report_data_${centerName}_${year}_${month}`;
-      const localData = localStorage.getItem(dataKey);
-      if (localData) {
-        try {
-          return JSON.parse(localData);
-        } catch {
-          return null;
-        }
-      }
-    }
     return null;
   }
 };
@@ -172,17 +169,27 @@ export default function SectorDashboardPage() {
     if (typeof window === "undefined") return;
 
     try {
-      // Load from database
+      // Load from database with user profiles
       const { data: dbData, error } = await supabase
         .from("monthly_statistics")
-        .select("health_center_name, created_at, statistics_data, status")
+        .select("user_id, created_at, statistics_data, status")
         .eq("month", selectedMonth)
         .eq("year", selectedYear);
+
+      // Get user profiles for display names
+      const userIds = [...new Set(dbData?.map(r => r.user_id).filter(Boolean) || [])];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]) || []);
 
       const dbSubmissions = new Map();
       if (!error && dbData) {
         dbData.forEach((record) => {
-          dbSubmissions.set(record.health_center_name, {
+          const userName = profilesMap.get(record.user_id) || `مستخدم ${record.user_id?.substring(0, 8)}`;
+          dbSubmissions.set(userName, {
             submitted: true,
             submittedAt: record.created_at,
             status: record.status || "submitted",
@@ -273,7 +280,7 @@ export default function SectorDashboardPage() {
 
   const handleExportToExcel = () => {
     const excelData: Array<{
-      "اسم المركز الصحي": string;
+      "اسم المستخدم": string;
       "الحالة": string;
       "تاريخ ووقت الإرسال": string;
       "مجموع الجلسات الفردية": number;
@@ -283,7 +290,7 @@ export default function SectorDashboardPage() {
 
     submissions.forEach((submission) => {
       excelData.push({
-        "اسم المركز الصحي": submission.centerName,
+        "اسم المستخدم": submission.centerName,
         "الحالة": (() => {
           const status = submission.status || (submission.submitted ? "submitted" : "draft");
           const statusLabels = {
@@ -824,7 +831,7 @@ export default function SectorDashboardPage() {
                   <thead>
                     <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
                       <th className="px-6 py-4 text-right text-sm font-bold">
-                        اسم المركز الصحي
+                        اسم المستخدم
                       </th>
                       <th className="px-6 py-4 text-center text-sm font-bold">الحالة</th>
                       <th className="px-6 py-4 text-center text-sm font-bold">تاريخ ووقت الإرسال</th>

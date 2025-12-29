@@ -41,9 +41,9 @@ export default function PresentationPage() {
       const rejected = data?.filter((r) => r.status === "rejected").length || 0;
       const draft = data?.filter((r) => r.status === "draft").length || 0;
 
-      // Get unique health centers
-      const healthCenters = new Set(data?.map((r) => r.health_center_name) || []);
-      const totalCenters = healthCenters.size;
+      // Get unique users (reports are now per user, not per center)
+      const userIds = new Set(data?.map((r) => r.user_id).filter(Boolean) || []);
+      const totalCenters = userIds.size;
 
       // Calculate totals from statistics_data
       let totalIndividualSessions = 0;

@@ -10,7 +10,6 @@ interface PendingUser {
   id: string;
   email: string;
   full_name: string;
-  health_center_name: string;
   role: "admin" | "center_user";
   is_approved: boolean;
   created_at: string;
@@ -36,13 +35,13 @@ export default function AdminApprovalsPage() {
       setLoading(true);
       const { data: pendingData, error: pendingError } = await supabase
         .from("profiles")
-        .select("id, email, full_name, health_center_name, role, is_approved, created_at")
+        .select("id, email, full_name, role, is_approved, created_at")
         .eq("is_approved", false)
         .order("created_at", { ascending: true });
 
       const { data: allData, error: allError } = await supabase
         .from("profiles")
-        .select("id, email, full_name, health_center_name, role, is_approved, created_at")
+        .select("id, email, full_name, role, is_approved, created_at")
         .order("created_at", { ascending: false });
 
       if (pendingError || allError) {
@@ -209,9 +208,6 @@ export default function AdminApprovalsPage() {
                         الاسم الرباعي
                       </th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
-                        اسم المركز الصحي
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
                         البريد الإلكتروني
                       </th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
@@ -233,9 +229,6 @@ export default function AdminApprovalsPage() {
                       >
                         <td className="px-4 py-3 text-sm text-gray-800">
                           {user.full_name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-800">
-                          {user.health_center_name}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-800">
                           {user.email}

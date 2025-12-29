@@ -47,7 +47,6 @@ type CategoryStats = {
 };
 
 type MonthlyStatistics = {
-  healthCenterName: string;
   month: string;
   year: number;
   categories: {
@@ -94,7 +93,6 @@ export default function StatisticsPage() {
         const { data, error } = await supabase
           .from("monthly_statistics")
           .select("id, status, rejection_reason, approved_at, approved_by, statistics_data")
-          .eq("health_center_name", profile.health_center_name)
           .eq("month", monthNumber)
           .eq("year", currentYear)
           .eq("user_id", user.id)
@@ -191,8 +189,8 @@ export default function StatisticsPage() {
     if (!file) return;
 
     // Prevent submission if user is not authenticated
-    if (!user || !profile || !profile.health_center_name) {
-      alert("يجب تسجيل الدخول وربط حسابك بمركز صحي أولاً");
+    if (!user || !profile) {
+      alert("يجب تسجيل الدخول أولاً");
       return;
     }
 
@@ -213,27 +211,22 @@ export default function StatisticsPage() {
         const data = XLSX.utils.sheet_to_json(ws);
         console.log("Data from Excel:", data);
         
-        // Use profile.health_center_name if available, otherwise use empty string
-        const healthCenterName = profile.health_center_name || "";
-        
         // Convert month name to number (1-12)
         const monthIndex = arabicMonths.indexOf(selectedMonth);
         const monthNumber = monthIndex >= 0 ? String(monthIndex + 1).padStart(2, "0") : String(new Date().getMonth() + 1).padStart(2, "0");
         
         // Prepare statistics data
         const statisticsData = {
-          healthCenterName,
           month: selectedMonth,
           year: currentYear,
           data: data,
         };
 
         // Save to database with user.id automatically attached
-        // First, check if record exists for this health center, month, and year
+        // First, check if record exists for this user, month, and year
         const { data: existingRecord } = await supabase
           .from("monthly_statistics")
           .select("id")
-          .eq("health_center_name", healthCenterName)
           .eq("month", monthNumber)
           .eq("year", currentYear)
           .eq("user_id", user.id)
@@ -272,7 +265,6 @@ export default function StatisticsPage() {
           const { error } = await supabase
             .from("monthly_statistics")
             .insert({
-              health_center_name: healthCenterName,
               user_id: user.id,
               month: monthNumber,
               year: currentYear,
@@ -296,7 +288,6 @@ export default function StatisticsPage() {
         const { data: updatedData } = await supabase
           .from("monthly_statistics")
           .select("id, status, rejection_reason, approved_at, approved_by, statistics_data")
-          .eq("health_center_name", healthCenterName)
           .eq("month", monthNumber)
           .eq("year", currentYear)
           .eq("user_id", user.id)
@@ -319,7 +310,6 @@ export default function StatisticsPage() {
             details: {
               month: selectedMonth,
               year: currentYear,
-              health_center_name: healthCenterName,
             },
           });
         }
@@ -352,7 +342,7 @@ export default function StatisticsPage() {
       }
 
       await generateApprovedReportPDF({
-        healthCenterName: profile.health_center_name,
+        healthCenterName: profile?.health_center_name || "",
         month: selectedMonth,
         year: currentYear,
         statisticsData: reportInfo.statistics_data,

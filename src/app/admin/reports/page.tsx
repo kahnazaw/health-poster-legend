@@ -15,7 +15,6 @@ import SectionCard from "@/components/layout/SectionCard";
 
 interface Report {
   id: string;
-  health_center_name: string;
   month: string;
   year: number;
   status: "draft" | "submitted" | "approved" | "rejected";
@@ -71,7 +70,6 @@ export default function AdminReportsPage() {
         .from("monthly_statistics")
         .select(`
           id,
-          health_center_name,
           month,
           year,
           status,
@@ -182,7 +180,6 @@ export default function AdminReportsPage() {
           details: {
             month: getMonthName(report.month),
             year: report.year,
-            health_center_name: report.health_center_name,
           },
         });
       }
@@ -243,7 +240,6 @@ export default function AdminReportsPage() {
           details: {
             month: getMonthName(report.month),
             year: report.year,
-            health_center_name: report.health_center_name,
             rejection_reason: rejectReason.trim(),
           },
         });
@@ -388,7 +384,7 @@ export default function AdminReportsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-800 mb-1">
-                            {report.health_center_name}
+                            {report.submitted_by_name || "مستخدم غير معروف"}
                           </h3>
                           <p className="text-sm text-gray-600">
                             {getMonthName(report.month)} / {report.year}
@@ -479,9 +475,6 @@ export default function AdminReportsPage() {
                   <thead>
                     <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
                       <th className="px-6 py-4 text-right text-sm font-bold">
-                        اسم المركز الصحي
-                      </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold">
                         الشهر / السنة
                       </th>
                       <th className="px-6 py-4 text-right text-sm font-bold">
@@ -504,9 +497,6 @@ export default function AdminReportsPage() {
                         key={report.id}
                         className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-emerald-50 transition-colors duration-150`}
                       >
-                        <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                          {report.health_center_name}
-                        </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
                           {getMonthName(report.month)} / {report.year}
                         </td>

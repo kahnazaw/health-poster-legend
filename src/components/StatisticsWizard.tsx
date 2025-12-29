@@ -202,10 +202,6 @@ export default function StatisticsWizard({
             <h2 className="text-2xl font-bold text-gray-800 mb-6">مراجعة المعلومات</h2>
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">المركز الصحي:</span>
-                <span className="font-semibold text-gray-800">{healthCenterName}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-600">الشهر:</span>
                 <span className="font-semibold text-gray-800">{selectedMonth}</span>
               </div>
