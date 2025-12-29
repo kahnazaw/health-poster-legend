@@ -377,6 +377,68 @@ export default function PosterStudioPage() {
                   </p>
                 </div>
 
+                {/* اختيار شكل التخطيط */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-purple-600" />
+                    شكل التخطيط
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {layoutOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setLayoutType(option.value)}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          layoutType === option.value
+                            ? "border-emerald-500 bg-emerald-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className={`${layoutType === option.value ? "text-emerald-600" : "text-gray-400"}`}>
+                            {option.icon}
+                          </div>
+                          <p className={`text-xs font-bold ${layoutType === option.value ? "text-emerald-700" : "text-gray-600"}`}>
+                            {option.label}
+                          </p>
+                          <p className="text-[10px] text-gray-500">{option.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* اختيار نمط النقاط */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-amber-600" />
+                    نمط النقاط
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {pointStyleOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setPointStyle(option.value)}
+                        className={`p-3 rounded-xl border-2 transition-all ${
+                          pointStyle === option.value
+                            ? "border-amber-500 bg-amber-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className={`${pointStyle === option.value ? "text-amber-600" : "text-gray-400"}`}>
+                            {option.icon}
+                          </div>
+                          <p className={`text-xs font-bold ${pointStyle === option.value ? "text-amber-700" : "text-gray-600"}`}>
+                            {option.label}
+                          </p>
+                          <p className="text-[10px] text-gray-500 text-center">{option.example}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* اختيار اللغة */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
