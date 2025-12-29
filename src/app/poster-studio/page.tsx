@@ -8,6 +8,7 @@ import { toPng } from "html-to-image";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAudit } from "@/lib/audit";
+import { generateSeasonalSuggestions, getOfficialCategories, type TopicSuggestion } from "@/lib/ai/topicSuggestions";
 
 export default function PosterStudioPage() {
   const { user, profile } = useAuth();
@@ -24,6 +25,8 @@ export default function PosterStudioPage() {
   const [sources, setSources] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
   // تعبئة اسم المركز من Profile
@@ -32,6 +35,12 @@ export default function PosterStudioPage() {
       setHealthCenterName(profile.health_center_name);
     }
   }, [profile]);
+
+  // تحميل الاقتراحات التلقائية عند تحميل الصفحة
+  useEffect(() => {
+    const seasonalSuggestions = generateSeasonalSuggestions();
+    setSuggestions(seasonalSuggestions);
+  }, []);
 
   // تعبئة الخيارات من URL parameters (من المعرض)
   useEffect(() => {
@@ -336,12 +345,55 @@ export default function PosterStudioPage() {
               </div>
 
               <div className="space-y-6">
-                {/* حقل الموضوع الصحي */}
+                {/* حقل الموضوع الصحي مع الاقتراحات التلقائية */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Search className="w-4 h-4 text-emerald-600" />
-                    المناسبة الصحية أو الموضوع
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                      <Search className="w-4 h-4 text-emerald-600" />
+                      المناسبة الصحية أو الموضوع
+                    </label>
+                    <button
+                      onClick={() => setShowSuggestions(!showSuggestions)}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {showSuggestions ? "إخفاء الاقتراحات" : "اقتراحات تلقائية"}
+                    </button>
+                  </div>
+                  
+                  {/* عرض الاقتراحات التلقائية */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="mb-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                      <p className="text-xs font-bold text-indigo-700 mb-3 flex items-center gap-2">
+                        <Sparkles className="w-3 h-3" />
+                        مواضيع مقترحة بناءً على الموسم الحالي ({new Date().toLocaleDateString("ar", { month: "long" })})
+                      </p>
+                      <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                        {suggestions
+                          .filter((s) => s.priority === "high")
+                          .slice(0, 6)
+                          .map((suggestion, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setTopic(suggestion.topic);
+                                setShowSuggestions(false);
+                              }}
+                              className="text-right p-3 bg-white rounded-lg border border-indigo-100 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-semibold text-gray-800"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{suggestion.topic}</span>
+                                <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                                  {suggestion.officialCategory}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1 text-right">{suggestion.description}</p>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
                   <textarea
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
