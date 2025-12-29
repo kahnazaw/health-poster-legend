@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import StatusBadge from "@/components/StatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SkeletonLoader from "@/components/SkeletonLoader";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -750,65 +751,114 @@ export default function SectorDashboardPage() {
           )}
         </div>
 
-        {/* Dashboard Table - Enhanced */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
-                  <th className="px-6 py-4 text-right text-sm font-bold">
-                    اسم المركز الصحي
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">الحالة</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">تاريخ ووقت الإرسال</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع الجلسات الفردية</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع المحاضرات</th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع الندوات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      <div className="flex flex-col items-center gap-3">
-                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <p className="font-medium">لا توجد بيانات متاحة</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  submissions.map((submission, index) => (
-                    <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-emerald-50 transition-colors duration-150`}>
-                      <td className="px-6 py-4 font-semibold text-gray-800">
-                        {submission.centerName}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <StatusBadge 
-                          status={(submission.status || (submission.submitted ? "submitted" : "draft")) as "draft" | "submitted" | "approved" | "rejected"} 
-                          size="md" 
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-center text-sm text-gray-600">
-                        {submission.submittedAt ? formatDate(submission.submittedAt) : "-"}
-                      </td>
-                      <td className="px-6 py-4 text-center font-medium text-gray-700">
-                        {submission.totals?.individualSessions || 0}
-                      </td>
-                      <td className="px-6 py-4 text-center font-medium text-gray-700">
-                        {submission.totals?.lectures || 0}
-                      </td>
-                      <td className="px-6 py-4 text-center font-medium text-gray-700">
-                        {submission.totals?.seminars || 0}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {/* Dashboard Table - Mobile Cards / Desktop Table */}
+        {submissions.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
+            <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p className="font-medium text-gray-600">لا توجد بيانات متاحة</p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Mobile: Card Layout */}
+            <div className="block md:hidden space-y-4 pb-20">
+              {submissions.map((submission, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-md border border-gray-200 p-4 space-y-3 active:scale-[0.98] transition-transform duration-150"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800 mb-1">
+                        {submission.centerName}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {submission.submittedAt ? formatDate(submission.submittedAt) : "لم يرسل"}
+                      </p>
+                    </div>
+                    <StatusBadge 
+                      status={(submission.status || (submission.submitted ? "submitted" : "draft")) as "draft" | "submitted" | "approved" | "rejected"} 
+                      size="sm" 
+                    />
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-100 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">الجلسات الفردية:</span>
+                      <span className="text-gray-800 font-bold">{submission.totals?.individualSessions || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">المحاضرات:</span>
+                      <span className="text-gray-800 font-bold">{submission.totals?.lectures || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">الندوات:</span>
+                      <span className="text-gray-800 font-bold">{submission.totals?.seminars || 0}</span>
+                    </div>
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="flex justify-between text-sm font-semibold">
+                        <span className="text-emerald-600">الإجمالي:</span>
+                        <span className="text-emerald-600">
+                          {(submission.totals?.individualSessions || 0) + 
+                           (submission.totals?.lectures || 0) + 
+                           (submission.totals?.seminars || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Table Layout */}
+            <div className="hidden md:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
+                        اسم المركز الصحي
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-bold">الحالة</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold">تاريخ ووقت الإرسال</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold">مجموع الجلسات الفردية</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold">مجموع المحاضرات</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold">مجموع الندوات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {submissions.map((submission, index) => (
+                      <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-emerald-50 transition-colors duration-150`}>
+                        <td className="px-6 py-4 font-semibold text-gray-800">
+                          {submission.centerName}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <StatusBadge 
+                            status={(submission.status || (submission.submitted ? "submitted" : "draft")) as "draft" | "submitted" | "approved" | "rejected"} 
+                            size="md" 
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-center text-sm text-gray-600">
+                          {submission.submittedAt ? formatDate(submission.submittedAt) : "-"}
+                        </td>
+                        <td className="px-6 py-4 text-center font-medium text-gray-700">
+                          {submission.totals?.individualSessions || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center font-medium text-gray-700">
+                          {submission.totals?.lectures || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center font-medium text-gray-700">
+                          {submission.totals?.seminars || 0}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Official Footer */}
