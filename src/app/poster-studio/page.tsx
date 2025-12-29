@@ -16,6 +16,7 @@ export default function PosterStudioPage() {
   const [language, setLanguage] = useState<"ar" | "tr">("ar");
   const [layoutType, setLayoutType] = useState<"timeline" | "grid" | "central">("grid");
   const [pointStyle, setPointStyle] = useState<"numbered" | "bulleted" | "iconic">("numbered");
+  const [visualLayout, setVisualLayout] = useState<"vertical" | "grid" | "circular">("grid"); // القالب البصري
   const [illustrations, setIllustrations] = useState<string[]>([]); // 3 صور منفصلة
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [suggestedTitle, setSuggestedTitle] = useState<string>("");
@@ -214,6 +215,7 @@ export default function PosterStudioPage() {
           language,
           microLearningPoints,
           sources,
+          layout: visualLayout, // القالب المستخدم
           metadata: "وحدة تعزيز الصحة - القطاع الأول",
         });
       } else {
@@ -284,7 +286,8 @@ export default function PosterStudioPage() {
         const centerName = healthCenterName
           ? sanitizeFileName(healthCenterName)
           : "قطاع_كركوك_الأول";
-        const fileName = `${topicName}-${centerName}-قطاع_كركوك_الأول.pdf`;
+        const layoutName = visualLayout === "vertical" ? "عمودي" : visualLayout === "grid" ? "شبكي" : "دائري";
+        const fileName = `${topicName}-${centerName}-${layoutName}-قطاع_كركوك_الأول.pdf`;
 
         // حفظ الملف
         pdf.save(fileName);
@@ -540,63 +543,148 @@ export default function PosterStudioPage() {
                       )}
                     </div>
 
-                    {/* شبكة المعلومات (3 بطاقات) - تصميم عصري */}
+                    {/* شبكة المعلومات - قوالب متعددة */}
                     <div className="flex-1 p-10 bg-gradient-to-br from-gray-50 via-white to-emerald-50/20">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                        {illustrations.map((illustration, index) => {
-                          // لوحة ألوان حيوية لكل بطاقة
-                          const colorSchemes = [
-                            {
-                              bg: "from-emerald-50 via-green-50 to-emerald-100",
-                              text: "text-emerald-700",
-                              border: "border-emerald-200",
-                              shadow: "shadow-emerald-200/50",
-                            },
-                            {
-                              bg: "from-blue-50 via-sky-50 to-blue-100",
-                              text: "text-blue-700",
-                              border: "border-blue-200",
-                              shadow: "shadow-blue-200/50",
-                            },
-                            {
-                              bg: "from-orange-50 via-amber-50 to-orange-100",
-                              text: "text-orange-700",
-                              border: "border-orange-200",
-                              shadow: "shadow-orange-200/50",
-                            },
-                          ];
-                          const scheme = colorSchemes[index] || colorSchemes[0];
+                      {visualLayout === "vertical" ? (
+                        /* قالب البطاقات العمودية - مثالي للممرات الضيقة */
+                        <div className="flex flex-col gap-8 max-w-3xl mx-auto">
+                          {illustrations.map((illustration, index) => {
+                            const colorSchemes = [
+                              { bg: "from-emerald-50 to-emerald-100", text: "text-emerald-700", border: "border-emerald-200" },
+                              { bg: "from-blue-50 to-blue-100", text: "text-blue-700", border: "border-blue-200" },
+                              { bg: "from-orange-50 to-orange-100", text: "text-orange-700", border: "border-orange-200" },
+                            ];
+                            const scheme = colorSchemes[index] || colorSchemes[0];
 
-                          return (
-                            <div
-                              key={index}
-                              className="flex flex-col items-center text-center p-6 bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
-                            >
-                              {/* الصورة الكرتونية المولدة - تصميم دائري احترافي */}
-                              <div className={`relative w-56 h-56 mb-6 rounded-full border-4 border-white shadow-xl bg-gradient-to-br ${scheme.bg} flex items-center justify-center overflow-hidden`}>
-                                <img
-                                  src={illustration}
-                                  alt={`Illustration ${index + 1}`}
-                                  className="w-full h-full object-contain p-4"
-                                />
+                            return (
+                              <div
+                                key={index}
+                                className={`flex flex-col md:flex-row items-center gap-6 p-8 bg-white rounded-3xl border-2 ${scheme.border} shadow-xl hover:shadow-2xl transition-all duration-300`}
+                              >
+                                {/* الصورة في اليسار */}
+                                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-2xl bg-gradient-to-br ${scheme.bg} flex items-center justify-center p-4 shadow-lg flex-shrink-0`}>
+                                  <img
+                                    src={illustration}
+                                    alt={`Illustration ${index + 1}`}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                                {/* النص في اليمين */}
+                                <div className="flex-1 text-center md:text-right">
+                                  <p
+                                    className={`text-2xl md:text-3xl font-black font-tajawal leading-relaxed ${scheme.text}`}
+                                    style={{
+                                      textShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                      WebkitFontSmoothing: "antialiased",
+                                      MozOsxFontSmoothing: "grayscale",
+                                    }}
+                                  >
+                                    {microLearningPoints[index] || ""}
+                                  </p>
+                                </div>
                               </div>
-                              
-                              {/* النص العربي - يُكتب برمجياً لضمان الدقة (Vector) */}
-                              <p
-                                className={`text-xl font-black font-tajawal leading-relaxed ${scheme.text}`}
+                            );
+                          })}
+                        </div>
+                      ) : visualLayout === "grid" ? (
+                        /* قالب الشبكة الحديثة - مظهر عصري */
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                          {illustrations.map((illustration, index) => {
+                            const colorSchemes = [
+                              { bg: "from-emerald-50 via-green-50 to-emerald-100", text: "text-emerald-700", border: "border-emerald-200", shadow: "shadow-emerald-200/50" },
+                              { bg: "from-blue-50 via-sky-50 to-blue-100", text: "text-blue-700", border: "border-blue-200", shadow: "shadow-blue-200/50" },
+                              { bg: "from-orange-50 via-amber-50 to-orange-100", text: "text-orange-700", border: "border-orange-200", shadow: "shadow-orange-200/50" },
+                            ];
+                            const scheme = colorSchemes[index] || colorSchemes[0];
+
+                            return (
+                              <div
+                                key={index}
+                                className={`flex flex-col items-center text-center p-6 bg-white rounded-3xl border-2 ${scheme.border} shadow-lg ${scheme.shadow} hover:shadow-2xl hover:scale-[1.02] transition-all duration-300`}
+                              >
+                                {/* الصورة الكرتونية - تصميم دائري */}
+                                <div className={`relative w-56 h-56 mb-6 rounded-full border-4 border-white shadow-xl bg-gradient-to-br ${scheme.bg} flex items-center justify-center overflow-hidden`}>
+                                  <img
+                                    src={illustration}
+                                    alt={`Illustration ${index + 1}`}
+                                    className="w-full h-full object-contain p-4"
+                                  />
+                                </div>
+                                {/* النص العربي */}
+                                <p
+                                  className={`text-xl font-black font-tajawal leading-relaxed ${scheme.text}`}
+                                  style={{
+                                    textShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                    WebkitFontSmoothing: "antialiased",
+                                    MozOsxFontSmoothing: "grayscale",
+                                  }}
+                                >
+                                  {microLearningPoints[index] || ""}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* قالب التدفق الدائري - موضوع وسطي */
+                        <div className="relative max-w-5xl mx-auto" style={{ minHeight: "600px" }}>
+                          {/* العنوان الرئيسي في الوسط */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                            <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-full p-8 shadow-2xl border-4 border-white">
+                              <h2 className="text-2xl font-black font-tajawal text-white text-center">
+                                {suggestedTitle || "رسالة صحية"}
+                              </h2>
+                            </div>
+                          </div>
+
+                          {/* الصور والنصوص حول المركز */}
+                          {illustrations.map((illustration, index) => {
+                            const angle = (index * 2 * Math.PI) / illustrations.length;
+                            const radius = 220;
+                            const x = Math.cos(angle) * radius;
+                            const y = Math.sin(angle) * radius;
+
+                            const colorSchemes = [
+                              { bg: "from-emerald-50 to-emerald-100", text: "text-emerald-700", border: "border-emerald-200" },
+                              { bg: "from-blue-50 to-blue-100", text: "text-blue-700", border: "border-blue-200" },
+                              { bg: "from-orange-50 to-orange-100", text: "text-orange-700", border: "border-orange-200" },
+                            ];
+                            const scheme = colorSchemes[index] || colorSchemes[0];
+
+                            return (
+                              <div
+                                key={index}
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                                 style={{
-                                  textShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                  // ضمان أن النص متجه (Vector) وليس صورة
-                                  WebkitFontSmoothing: "antialiased",
-                                  MozOsxFontSmoothing: "grayscale",
+                                  transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
                                 }}
                               >
-                                {microLearningPoints[index] || ""}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
+                                <div className={`flex flex-col items-center text-center w-64 p-6 bg-white rounded-2xl border-2 ${scheme.border} shadow-xl`}>
+                                  {/* الصورة */}
+                                  <div className={`w-40 h-40 mb-4 rounded-full bg-gradient-to-br ${scheme.bg} flex items-center justify-center p-3 shadow-lg`}>
+                                    <img
+                                      src={illustration}
+                                      alt={`Illustration ${index + 1}`}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  {/* النص */}
+                                  <p
+                                    className={`text-lg font-black font-tajawal leading-relaxed ${scheme.text}`}
+                                    style={{
+                                      textShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                      WebkitFontSmoothing: "antialiased",
+                                      MozOsxFontSmoothing: "grayscale",
+                                    }}
+                                  >
+                                    {microLearningPoints[index] || ""}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     {/* تذييل رسمي يحمل اسم المركز والمصدر */}
