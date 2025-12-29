@@ -57,9 +57,9 @@ export default function PosterExportActions({
     setExporting("pdf");
     try {
       const canvas = await html2canvas(posterRef.current, {
-        scale: 2,
         useCORS: true,
-        backgroundColor: "#ffffff",
+        background: "#ffffff",
+        logging: false,
       });
 
       const imgData = canvas.toDataURL("image/png");
