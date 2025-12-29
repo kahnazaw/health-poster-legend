@@ -53,14 +53,17 @@ Illustration Guidelines:
 - If the point is about prevention: Show preventive measures in a clear, visual way
 - Make it warm, friendly, and approachable - suitable for all ages
 
-CRITICAL RULES:
-- DO NOT include any Arabic text in the image
-- DO NOT write any words or sentences
-- ONLY create a clean, silent cartoon illustration
-- Make it visually engaging and immediately understandable
+CRITICAL RULES - STRICTLY ENFORCED:
+- ABSOLUTELY NO TEXT INSIDE IMAGES - This is mandatory
+- DO NOT include any Arabic text, numbers, or letters in the image
+- DO NOT write any words, sentences, or labels
+- DO NOT add any text overlays, captions, or annotations
+- ONLY create a clean, silent cartoon illustration that expresses meaning visually
+- Make it visually engaging and immediately understandable without any text
 - Use flat design style (no gradients, no 3D effects)
+- The illustration must be completely text-free - rely solely on visual elements
 
-Generate a single, professional, engaging medical cartoon illustration that clearly represents: "${point}"`;
+Generate a single, professional, engaging, TEXT-FREE medical cartoon illustration that clearly represents: "${point}" through visual elements only.`;
 
   try {
     // استخدام generateImageWithGemini من geminiImageGenerator

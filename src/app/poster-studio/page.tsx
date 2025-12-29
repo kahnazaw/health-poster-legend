@@ -532,38 +532,61 @@ export default function PosterStudioPage() {
                       )}
                     </div>
 
-                    {/* المحتوى الرئيسي - CSS Grid */}
-                    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 to-white">
-                      <div className="grid grid-cols-1 gap-8 max-w-5xl mx-auto">
-                        {illustrations.map((illustration, index) => (
-                          <div
-                            key={index}
-                            className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300"
-                          >
-                            {/* الصورة الكرتونية */}
-                            <div className="relative w-full h-64 bg-gradient-to-br from-emerald-50 to-blue-50">
-                              <img
-                                src={illustration}
-                                alt={`Illustration ${index + 1}`}
-                                className="w-full h-full object-contain p-4"
-                              />
-                            </div>
-                            {/* النص تحت الصورة */}
-                            <div className="p-6">
-                              <div
-                                className={`text-2xl font-black font-tajawal text-center ${
-                                  index === 0
-                                    ? "text-emerald-700"
-                                    : index === 1
-                                    ? "text-blue-700"
-                                    : "text-orange-600"
-                                }`}
-                              >
-                                {microLearningPoints[index] || ""}
+                    {/* المحتوى الرئيسي - CSS Grid مع تصميم مكوّني متقدم */}
+                    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                        {illustrations.map((illustration, index) => {
+                          // لوحة ألوان حيوية لكل بطاقة
+                          const colorSchemes = [
+                            {
+                              bg: "from-emerald-50 via-green-50 to-emerald-100",
+                              text: "text-emerald-700",
+                              border: "border-emerald-200",
+                              shadow: "shadow-emerald-200/50",
+                            },
+                            {
+                              bg: "from-blue-50 via-sky-50 to-blue-100",
+                              text: "text-blue-700",
+                              border: "border-blue-200",
+                              shadow: "shadow-blue-200/50",
+                            },
+                            {
+                              bg: "from-orange-50 via-amber-50 to-orange-100",
+                              text: "text-orange-700",
+                              border: "border-orange-200",
+                              shadow: "shadow-orange-200/50",
+                            },
+                          ];
+                          const scheme = colorSchemes[index] || colorSchemes[0];
+
+                          return (
+                            <div
+                              key={index}
+                              className={`bg-white rounded-3xl overflow-hidden border-2 ${scheme.border} shadow-lg ${scheme.shadow} hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col`}
+                            >
+                              {/* الصورة الكرتونية في الأعلى */}
+                              <div className={`relative w-full h-72 bg-gradient-to-br ${scheme.bg} flex items-center justify-center p-6`}>
+                                <img
+                                  src={illustration}
+                                  alt={`Illustration ${index + 1}`}
+                                  className="w-full h-full object-contain drop-shadow-lg"
+                                />
+                              </div>
+                              
+                              {/* النص العربي المصاغ باحترافية في الأسفل */}
+                              <div className="p-6 flex-1 flex items-center justify-center bg-white">
+                                <div
+                                  className={`text-xl md:text-2xl font-black font-tajawal text-center leading-relaxed ${scheme.text}`}
+                                  style={{
+                                    textShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                  }}
+                                >
+                                  {microLearningPoints[index] || ""}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
