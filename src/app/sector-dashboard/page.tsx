@@ -465,7 +465,7 @@ export default function SectorDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
       {/* Official Header - Enhanced */}
       <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-6">

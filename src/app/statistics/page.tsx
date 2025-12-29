@@ -365,7 +365,7 @@ export default function StatisticsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["center_user"]}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 pb-24 md:pb-8">
         <div className="max-w-5xl mx-auto dir-rtl" dir="rtl">
           {/* Header */}
           <div className="text-center mb-8">

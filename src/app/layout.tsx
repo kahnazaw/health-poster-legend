@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import BottomNav from "@/components/BottomNav";
 
 export default function RootLayout({
   children,
@@ -9,7 +10,10 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className="bg-gray-50 text-gray-900">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

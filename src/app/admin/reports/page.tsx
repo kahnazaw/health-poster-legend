@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
 import StatusBadge from "@/components/StatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import StatusTimeline from "@/components/StatusTimeline";
+import SkeletonLoader from "@/components/SkeletonLoader";
 
 interface Report {
   id: string;
@@ -294,7 +296,7 @@ export default function AdminReportsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
         {/* Official Header - Enhanced */}
         <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-6">
@@ -386,7 +388,9 @@ export default function AdminReportsPage() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
 
             {loading ? (
-              <LoadingSpinner size="md" text="جاري التحميل..." />
+              <div className="space-y-4">
+                <SkeletonLoader type="card" count={3} />
+              </div>
             ) : filteredReports.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -395,7 +399,104 @@ export default function AdminReportsPage() {
                 <p className="text-lg font-medium">لا توجد تقارير</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile: Card Layout */}
+                <div className="block md:hidden space-y-4 pb-20">
+                  {filteredReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="bg-white rounded-xl shadow-md border border-gray-200 p-4 space-y-3 active:scale-[0.98] transition-transform duration-150"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-800 mb-1">
+                            {report.health_center_name}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {getMonthName(report.month)} / {report.year}
+                          </p>
+                        </div>
+                        <StatusBadge status={report.status as "draft" | "submitted" | "approved" | "rejected"} size="sm" />
+                      </div>
+                      
+                      <div className="pt-2 border-t border-gray-100 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">أرسل بواسطة:</span>
+                          <span className="text-gray-800 font-medium">{report.submitted_by_name || "غير معروف"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">تاريخ الإرسال:</span>
+                          <span className="text-gray-800 font-medium">{formatDate(report.created_at)}</span>
+                        </div>
+                      </div>
+
+                      {report.status === "rejected" && report.rejection_reason && (
+                        <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                          <p className="text-xs font-semibold text-red-800 mb-1">سبب الرفض:</p>
+                          <p className="text-sm text-red-700">{report.rejection_reason}</p>
+                        </div>
+                      )}
+
+                      {report.status === "approved" && report.approved_at && (
+                        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                          <p className="text-xs font-semibold text-green-800">
+                            اعتمد في: {formatDate(report.approved_at)}
+                          </p>
+                        </div>
+                      )}
+
+                      {report.status === "submitted" && (
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => handleApprove(report.id)}
+                            disabled={approving === report.id}
+                            className="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                          >
+                            {approving === report.id ? (
+                              <>
+                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>جاري الموافقة...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>موافقة</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => openRejectModal(report.id)}
+                            disabled={rejecting === report.id}
+                            className="flex-1 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:ring-4 focus:ring-red-200 active:scale-95 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                          >
+                            {rejecting === report.id ? (
+                              <>
+                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>جاري الرفض...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>رفض</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
@@ -505,7 +606,8 @@ export default function AdminReportsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>
