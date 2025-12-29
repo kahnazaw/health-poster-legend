@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   const { user, profile, loading } = useAuth();
@@ -49,7 +50,7 @@ export default function HomePage() {
       </div>
 
       {/* Sticky Navigation Header with Glass Effect */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[#059669]/20 shadow-sm">
+      <header className="sticky top-0 z-50 glass-effect border-b border-[#059669]/20 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo Section */}
@@ -69,17 +70,17 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Navigation Links */}
-            <div className="flex items-center gap-3">
+            {/* Navigation Links - Fixed with flex-shrink-0 */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               <Link
                 href="/login"
-                className="px-5 py-2.5 bg-[#059669] text-white rounded-xl font-semibold hover:bg-[#047857] transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                className="px-5 py-2.5 bg-[#059669] text-white rounded-xl font-semibold hover:bg-[#047857] transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 whitespace-nowrap flex-shrink-0"
               >
                 تسجيل الدخول
               </Link>
               <Link
                 href="/signup"
-                className="px-5 py-2.5 bg-white text-[#059669] border-2 border-[#059669] rounded-xl font-semibold hover:bg-[#059669] hover:text-white transition-all duration-300"
+                className="px-5 py-2.5 bg-white text-[#059669] border-2 border-[#059669] rounded-xl font-semibold hover:bg-[#059669] hover:text-white transition-all duration-300 whitespace-nowrap flex-shrink-0"
               >
                 إنشاء حساب
               </Link>
@@ -91,7 +92,12 @@ export default function HomePage() {
       {/* Hero Section with Gradient Background */}
       <section className="relative pt-20 pb-32">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center animate-fade-in-up">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-block mb-6 px-4 py-2 bg-[#059669]/10 rounded-full border border-[#059669]/20">
               <span className="text-[#059669] font-semibold text-sm">منصة رقمية متكاملة</span>
             </div>
@@ -121,7 +127,7 @@ export default function HomePage() {
                 تسجيل الدخول
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -139,7 +145,13 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature Card 1 */}
-            <div className="group bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <motion.div 
+              className="group bg-white rounded-[32px] shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+            >
               <div className="w-16 h-16 bg-gradient-to-br from-[#059669] to-[#047857] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -149,10 +161,16 @@ export default function HomePage() {
               <p className="text-gray-600 leading-relaxed">
                 رفع ملفات Excel الشهرية بسهولة ومتابعة حالة التقرير حتى الاعتماد النهائي
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature Card 2 */}
-            <div className="group bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <motion.div 
+              className="group bg-white rounded-[32px] shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+            >
               <div className="w-16 h-16 bg-gradient-to-br from-[#059669] to-[#047857] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -162,10 +180,16 @@ export default function HomePage() {
               <p className="text-gray-600 leading-relaxed">
                 مراقبة جميع المراكز الصحية ومراجعة التقارير والموافقة عليها بسهولة
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature Card 3 */}
-            <div className="group bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <motion.div 
+              className="group bg-white rounded-[32px] shadow-xl p-8 border border-gray-100 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+            >
               <div className="w-16 h-16 bg-gradient-to-br from-[#059669] to-[#047857] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -175,7 +199,7 @@ export default function HomePage() {
               <p className="text-gray-600 leading-relaxed">
                 إنشاء بوسترات توعوية احترافية بتصميمات جاهزة وتصديرها بصيغ PNG و PDF
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -183,7 +207,12 @@ export default function HomePage() {
       {/* Quick Links Section */}
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-white rounded-3xl shadow-xl p-10 border border-gray-100">
+          <motion.div 
+            className="bg-white rounded-[32px] shadow-xl p-10 border border-gray-100"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             <h3 className="text-3xl font-bold text-gray-900 mb-10 text-center">روابط سريعة</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Link
@@ -216,7 +245,7 @@ export default function HomePage() {
                 </div>
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
