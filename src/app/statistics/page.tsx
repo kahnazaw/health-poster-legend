@@ -365,123 +365,221 @@ export default function StatisticsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["center_user"]}>
-      <div className="p-6 max-w-4xl mx-auto dir-rtl" dir="rtl">
-        <h1 className="text-3xl font-bold mb-8 text-center text-blue-800">إحصائيات المراكز الصحية</h1>
-      
-      {/* Report Status Display */}
-      {!loadingReport && reportInfo && (
-        <div className={`mb-6 p-4 rounded-lg border-2 ${
-          reportInfo.status === "approved" 
-            ? "bg-green-50 border-green-300" 
-            : reportInfo.status === "rejected"
-            ? "bg-red-50 border-red-300"
-            : reportInfo.status === "submitted"
-            ? "bg-yellow-50 border-yellow-300"
-            : "bg-gray-50 border-gray-300"
-        }`}>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="font-bold text-lg">
-              {reportInfo.status === "approved" && "✓ تم اعتماد التقرير"}
-              {reportInfo.status === "rejected" && "✗ تم رفض التقرير"}
-              {reportInfo.status === "submitted" && "⏳ قيد المراجعة"}
-              {reportInfo.status === "draft" && "📝 مسودة"}
-            </span>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+        <div className="max-w-5xl mx-auto dir-rtl" dir="rtl">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+              إحصائيات المراكز الصحية
+            </h1>
+            <p className="text-gray-600">نظام إدارة وتتبع الإحصائيات الشهرية</p>
           </div>
-          {reportInfo.status === "rejected" && reportInfo.rejection_reason && (
-            <div className="mt-2 p-3 bg-white rounded border border-red-200">
-              <p className="font-semibold text-red-800 mb-1">سبب الرفض:</p>
-              <p className="text-red-700">{reportInfo.rejection_reason}</p>
+      
+          {/* Report Status Display - Enhanced */}
+          {!loadingReport && reportInfo && (
+            <div className={`bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6 border-l-4 ${
+              reportInfo.status === "approved" 
+                ? "border-l-green-500 bg-gradient-to-r from-green-50 to-white" 
+                : reportInfo.status === "rejected"
+                ? "border-l-red-500 bg-gradient-to-r from-red-50 to-white"
+                : reportInfo.status === "submitted"
+                ? "border-l-yellow-500 bg-gradient-to-r from-yellow-50 to-white"
+                : "border-l-gray-400 bg-gradient-to-r from-gray-50 to-white"
+            }`}>
+              <div className="flex items-center gap-4 mb-3">
+                <div className={`p-3 rounded-full ${
+                  reportInfo.status === "approved" ? "bg-green-100" :
+                  reportInfo.status === "rejected" ? "bg-red-100" :
+                  reportInfo.status === "submitted" ? "bg-yellow-100" :
+                  "bg-gray-100"
+                }`}>
+                  {reportInfo.status === "approved" && (
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {reportInfo.status === "rejected" && (
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                  {reportInfo.status === "submitted" && (
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  {reportInfo.status === "draft" && (
+                    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-xl mb-1">
+                    {reportInfo.status === "approved" && "تم اعتماد التقرير"}
+                    {reportInfo.status === "rejected" && "تم رفض التقرير"}
+                    {reportInfo.status === "submitted" && "قيد المراجعة"}
+                    {reportInfo.status === "draft" && "مسودة"}
+                  </h3>
+                  {reportInfo.status === "approved" && reportInfo.approved_at && (
+                    <p className="text-sm text-gray-600">
+                      تم الاعتماد في: {new Date(reportInfo.approved_at).toLocaleDateString("ar-IQ")}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {reportInfo.status === "rejected" && reportInfo.rejection_reason && (
+                <div className="mt-4 p-4 bg-white rounded-lg border-2 border-red-200">
+                  <p className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    سبب الرفض:
+                  </p>
+                  <p className="text-red-700">{reportInfo.rejection_reason}</p>
+                </div>
+              )}
+              {reportInfo.status === "approved" && (
+                <div className="mt-4">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    تحميل PDF المعتمد
+                  </button>
+                </div>
+              )}
             </div>
           )}
-          {reportInfo.status === "approved" && reportInfo.approved_at && (
-            <p className="text-sm text-gray-600 mt-2">
-              تم الاعتماد في: {new Date(reportInfo.approved_at).toLocaleDateString("ar-IQ")}
+
+          {/* Form Card */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+            <div className="border-b border-gray-200 pb-4 mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                معلومات التقرير
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* اسم المركز الصحي (قراءة فقط) */}
+              <div>
+                <label className="block mb-2 font-semibold text-gray-700 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  اسم المركز الصحي
+                </label>
+                <input
+                  type="text"
+                  value={profile?.health_center_name || ""}
+                  disabled
+                  readOnly
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
+                />
+              </div>
+
+              {/* اختيار الشهر */}
+              <div>
+                <label className="block mb-2 font-semibold text-gray-700 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  الشهر
+                </label>
+                <select 
+                  value={selectedMonth} 
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  disabled={reportInfo?.status === "approved"}
+                  className={`w-full p-3 border-2 rounded-lg shadow-sm focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition-all ${
+                    reportInfo?.status === "approved" 
+                      ? "bg-gray-50 border-gray-200 cursor-not-allowed text-gray-500" 
+                      : "border-gray-300 hover:border-emerald-400"
+                  }`}
+                >
+                  {arabicMonths.map((month) => (
+                    <option key={month} value={month}>{month}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* السنة */}
+              <div>
+                <label className="block mb-2 font-semibold text-gray-700 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  السنة
+                </label>
+                <input 
+                  type="number" 
+                  readOnly 
+                  value={currentYear} 
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* File Upload Card */}
+          <div className={`bg-white rounded-xl shadow-lg border border-gray-100 p-6 border-2 border-dashed transition-all ${
+            reportInfo?.status === "approved" 
+              ? "bg-gray-50 border-gray-300 opacity-60" 
+              : "bg-gradient-to-br from-blue-50 to-emerald-50 border-blue-300 hover:border-emerald-400"
+          }`}>
+            <div className="text-center">
+              <div className="mb-4">
+                <div className={`inline-flex p-4 rounded-full ${
+                  reportInfo?.status === "approved" 
+                    ? "bg-gray-200" 
+                    : "bg-blue-100"
+                }`}>
+                  <svg className={`w-8 h-8 ${
+                    reportInfo?.status === "approved" 
+                      ? "text-gray-400" 
+                      : "text-blue-600"
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+              </div>
+              <label className={`block mb-4 font-bold text-lg ${
+                reportInfo?.status === "approved" ? "text-gray-500" : "text-blue-700"
+              }`}>
+                {reportInfo?.status === "approved" 
+                  ? "تم اعتماد التقرير - لا يمكن التعديل" 
+                  : "ارفع ملف الإحصائيات (Excel)"}
+              </label>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept=".xlsx, .xls" 
+                onChange={handleFileUpload}
+                disabled={reportInfo?.status === "approved"}
+                className={`mx-auto block text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:transition-all ${
+                  reportInfo?.status === "approved"
+                    ? "file:bg-gray-400 file:text-white cursor-not-allowed opacity-50"
+                    : "file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 file:shadow-md hover:file:shadow-lg cursor-pointer"
+                }`}
+              />
+              {reportInfo?.status !== "approved" && (
+                <p className="mt-3 text-sm text-gray-600">
+                  يرجى رفع ملف Excel يحتوي على البيانات الإحصائية
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-12 text-center">
+            <p className="text-gray-500 text-sm">
+              مشروع إدارة إحصائيات المراكز الصحية - صحة كركوك
             </p>
-          )}
-          {reportInfo.status === "approved" && (
-            <div className="mt-4">
-              <button
-                onClick={handleDownloadPDF}
-                className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors shadow-md"
-              >
-                📄 تحميل PDF المعتمد
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {/* اسم المركز الصحي (قراءة فقط) */}
-        <div>
-          <label className="block mb-2 font-semibold">اسم المركز الصحي:</label>
-          <input
-            type="text"
-            value={profile?.health_center_name || ""}
-            disabled
-            readOnly
-            className="w-full p-2 border rounded bg-gray-50 cursor-not-allowed shadow-sm text-gray-700"
-          />
-        </div>
-
-        {/* اختيار الشهر */}
-        <div>
-          <label className="block mb-2 font-semibold">الشهر:</label>
-          <select 
-            value={selectedMonth} 
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            disabled={reportInfo?.status === "approved"}
-            className={`w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-blue-500 ${
-              reportInfo?.status === "approved" ? "bg-gray-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {arabicMonths.map((month) => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* السنة */}
-        <div>
-          <label className="block mb-2 font-semibold">السنة:</label>
-          <input 
-            type="number" 
-            readOnly 
-            value={currentYear} 
-            className="w-full p-2 border rounded bg-gray-50 cursor-not-allowed shadow-sm"
-          />
-        </div>
-      </div>
-
-      {/* قسم رفع الملفات */}
-      <div className={`p-6 rounded-lg border-2 border-dashed text-center ${
-        reportInfo?.status === "approved" 
-          ? "bg-gray-50 border-gray-300 opacity-60" 
-          : "bg-blue-50 border-blue-300"
-      }`}>
-        <label className={`block mb-4 font-bold ${
-          reportInfo?.status === "approved" ? "text-gray-500" : "text-blue-700"
-        }`}>
-          {reportInfo?.status === "approved" 
-            ? "تم اعتماد التقرير - لا يمكن التعديل" 
-            : "ارفع ملف الإحصائيات (Excel)"}
-        </label>
-        <input 
-          ref={fileInputRef}
-          type="file" 
-          accept=".xlsx, .xls" 
-          onChange={handleFileUpload}
-          disabled={reportInfo?.status === "approved"}
-          className={`mx-auto block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
-            reportInfo?.status === "approved"
-              ? "file:bg-gray-400 file:text-white cursor-not-allowed opacity-50"
-              : "file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
-          }`}
-        />
-      </div>
-
-        <div className="mt-12 text-center text-gray-500 text-sm">
-          <p>مشروع إدارة إحصائيات المراكز الصحية - صحة كركوك</p>
+          </div>
         </div>
       </div>
     </ProtectedRoute>

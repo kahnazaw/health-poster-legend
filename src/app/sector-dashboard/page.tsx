@@ -457,53 +457,65 @@ export default function SectorDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <main className="min-h-screen bg-gray-50">
-      {/* Official Header */}
-      <div className="bg-white border-b-2 border-emerald-600 py-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-end mb-4">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Official Header - Enhanced */}
+      <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">لوحة متابعة الإحصائيات</h1>
+                <p className="text-sm text-gray-600">مراقبة وتتبع التقارير الشهرية</p>
+              </div>
+            </div>
             <button
               onClick={signOut}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 text-sm bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               تسجيل الخروج
             </button>
           </div>
-          <div className="text-center">
-            <div className="flex justify-center items-center mb-4">
+          <div className="text-center border-t border-gray-200 pt-4">
+            <div className="flex justify-center items-center mb-3">
               <img 
                 src="/logo.png" 
                 alt="شعار دائرة صحة كركوك" 
-                className="h-20 w-auto object-contain"
+                className="h-16 w-auto object-contain"
               />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
               دائرة صحة كركوك
             </h2>
-            <p className="text-lg text-gray-700 mb-1">
-              قطاع كركوك الأول
+            <p className="text-base text-gray-700">
+              قطاع كركوك الأول - وحدة تعزيز الصحة
             </p>
-            <p className="text-base text-gray-600 mb-4">
-              وحدة تعزيز الصحة
-            </p>
-            <h1 className="text-xl font-semibold text-emerald-700 border-t border-gray-200 pt-4">
-              لوحة متابعة إحصائيات المراكز الصحية
-            </h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto py-8 px-4">
-
-        {/* Filters and Summary */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        {/* Filters and Export Card */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">الشهر</label>
+              <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                الشهر
+              </label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const monthNum = String(i + 1).padStart(2, "0");
@@ -516,12 +528,17 @@ export default function SectorDashboardPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">السنة</label>
+              <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                السنة
+              </label>
               <input
                 type="number"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value) || currentDate.getFullYear())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                 min="2020"
                 max="2100"
               />
@@ -529,112 +546,150 @@ export default function SectorDashboardPage() {
             <div className="flex items-end">
               <button
                 onClick={handleExportToExcel}
-                className="w-full px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+                className="px-6 py-2.5 w-full bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
                 تصدير Excel شامل
               </button>
             </div>
             <div className="flex items-end">
-              <div className="w-full text-center p-3 bg-gray-100 rounded-lg">
-                <div className="text-sm text-gray-600">نسبة الإكمال</div>
-                <div className="text-2xl font-bold text-emerald-600">
+              <div className="w-full text-center p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-200">
+                <div className="text-xs text-gray-600 mb-1 font-medium">نسبة الإكمال</div>
+                <div className="text-3xl font-bold text-emerald-600 mb-1">
                   {completionPercentage}%
                 </div>
                 <div className="text-xs text-gray-500">
-                  {approvedCount} / {totalCenters}
+                  {approvedCount} / {totalCenters} مركز
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Summary Indicators with Approval Status */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-emerald-700">مؤشرات الحالة والموافقة</h2>
+        {/* Summary Indicators with Approval Status - Enhanced */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+          <div className="border-b border-gray-200 pb-4 mb-4">
+            <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              مؤشرات الحالة والموافقة
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">إجمالي المراكز</div>
-              <div className="text-3xl font-bold text-blue-600">{totalCenters}</div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border-2 border-blue-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">إجمالي المراكز</div>
+              <div className="text-4xl font-bold text-blue-600">{totalCenters}</div>
             </div>
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <div className="text-sm text-gray-600 mb-1">قيد المراجعة</div>
-              <div className="text-3xl font-bold text-yellow-600">{pendingCount}</div>
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-5 rounded-xl border-2 border-yellow-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">قيد المراجعة</div>
+              <div className="text-4xl font-bold text-yellow-600">{pendingCount}</div>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-sm text-gray-600 mb-1">معتمد</div>
-              <div className="text-3xl font-bold text-green-600">{approvedCount}</div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border-2 border-green-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">معتمد</div>
+              <div className="text-4xl font-bold text-green-600">{approvedCount}</div>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <div className="text-sm text-gray-600 mb-1">مرفوض</div>
-              <div className="text-3xl font-bold text-red-600">{rejectedCount}</div>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 p-5 rounded-xl border-2 border-red-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">مرفوض</div>
+              <div className="text-4xl font-bold text-red-600">{rejectedCount}</div>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-600 mb-1">لم يرسل</div>
-              <div className="text-3xl font-bold text-gray-600">{totalCenters - submittedCount}</div>
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">لم يرسل</div>
+              <div className="text-4xl font-bold text-gray-600">{totalCenters - submittedCount}</div>
             </div>
-            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
-              <div className="text-sm text-gray-600 mb-1">نسبة الإكمال</div>
-              <div className="text-3xl font-bold text-emerald-600">{completionPercentage}%</div>
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-5 rounded-xl border-2 border-emerald-200 shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-xs text-gray-600 mb-2 font-medium uppercase">نسبة الإكمال</div>
+              <div className="text-4xl font-bold text-emerald-600">{completionPercentage}%</div>
             </div>
           </div>
         </div>
 
-        {/* Center Activity Ranking */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-emerald-700">ترتيب نشاط المراكز</h2>
+        {/* Center Activity Ranking - Enhanced */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+          <div className="border-b border-gray-200 pb-4 mb-4">
+            <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+              ترتيب نشاط المراكز
+            </h2>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-green-700">أعلى 5 مراكز أداء</h3>
+              <h3 className="text-lg font-semibold mb-4 text-green-700 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                أعلى 5 مراكز أداء
+              </h3>
               {topPerformers.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {topPerformers.map((center, index) => (
                     <div
                       key={center.centerName}
-                      className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 hover:shadow-md transition-all"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-8 h-8 bg-green-600 text-white rounded-full font-bold">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-full font-bold shadow-md">
                           {index + 1}
                         </span>
-                        <span className="font-medium">{center.centerName}</span>
+                        <span className="font-semibold text-gray-800">{center.centerName}</span>
                       </div>
-                      <span className="font-bold text-green-600">{center.totalActivity}</span>
+                      <span className="font-bold text-green-600 text-lg">{center.totalActivity}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">لا توجد بيانات</p>
+                <div className="text-center py-8 text-gray-500">
+                  <p>لا توجد بيانات</p>
+                </div>
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-red-700">أقل 5 مراكز أداء</h3>
+              <h3 className="text-lg font-semibold mb-4 text-red-700 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+                أقل 5 مراكز أداء
+              </h3>
               {bottomPerformers.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {bottomPerformers.map((center, index) => (
                     <div
                       key={center.centerName}
-                      className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-2 border-red-200 hover:shadow-md transition-all"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-8 h-8 bg-red-600 text-white rounded-full font-bold">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-red-600 to-pink-600 text-white rounded-full font-bold shadow-md">
                           {bottomPerformers.length - index}
                         </span>
-                        <span className="font-medium">{center.centerName}</span>
+                        <span className="font-semibold text-gray-800">{center.centerName}</span>
                       </div>
-                      <span className="font-bold text-red-600">{center.totalActivity}</span>
+                      <span className="font-bold text-red-600 text-lg">{center.totalActivity}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">لا توجد بيانات</p>
+                <div className="text-center py-8 text-gray-500">
+                  <p>لا توجد بيانات</p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Category Activity Analysis */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-emerald-700">تحليل نشاط الفئات</h2>
+        {/* Category Activity Analysis - Enhanced */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+          <div className="border-b border-gray-200 pb-4 mb-4">
+            <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              تحليل نشاط الفئات
+            </h2>
+          </div>
           {categoryData.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
@@ -687,36 +742,41 @@ export default function SectorDashboardPage() {
           )}
         </div>
 
-        {/* Dashboard Table */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* Dashboard Table - Enhanced */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-emerald-600 text-white">
-                  <th className="border border-gray-300 px-4 py-3 text-right">
+                <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+                  <th className="px-6 py-4 text-right text-sm font-bold">
                     اسم المركز الصحي
                   </th>
-                  <th className="border border-gray-300 px-4 py-3">الحالة</th>
-                  <th className="border border-gray-300 px-4 py-3">تاريخ ووقت الإرسال</th>
-                  <th className="border border-gray-300 px-4 py-3">مجموع الجلسات الفردية</th>
-                  <th className="border border-gray-300 px-4 py-3">مجموع المحاضرات</th>
-                  <th className="border border-gray-300 px-4 py-3">مجموع الندوات</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold">الحالة</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold">تاريخ ووقت الإرسال</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع الجلسات الفردية</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع المحاضرات</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold">مجموع الندوات</th>
                 </tr>
               </thead>
               <tbody>
                 {submissions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                      لا توجد بيانات متاحة
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center gap-3">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p className="font-medium">لا توجد بيانات متاحة</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   submissions.map((submission, index) => (
-                    <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="border border-gray-300 px-4 py-3 font-medium">
+                    <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-emerald-50 transition-colors duration-150`}>
+                      <td className="px-6 py-4 font-semibold text-gray-800">
                         {submission.centerName}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
                         {(() => {
                           const status = submission.status || (submission.submitted ? "submitted" : "draft");
                           const statusConfig = {
@@ -727,22 +787,22 @@ export default function SectorDashboardPage() {
                           };
                           const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
                           return (
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.className}`}>
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.className}`}>
                               {config.label}
                             </span>
                           );
                         })()}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center text-sm">
+                      <td className="px-6 py-4 text-center text-sm text-gray-600">
                         {submission.submittedAt ? formatDate(submission.submittedAt) : "-"}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center font-medium text-gray-700">
                         {submission.totals?.individualSessions || 0}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center font-medium text-gray-700">
                         {submission.totals?.lectures || 0}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center font-medium text-gray-700">
                         {submission.totals?.seminars || 0}
                       </td>
                     </tr>

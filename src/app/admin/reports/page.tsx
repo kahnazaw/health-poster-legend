@@ -307,55 +307,77 @@ export default function AdminReportsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <main className="min-h-screen bg-gray-50">
-        {/* Official Header */}
-        <div className="bg-white border-b-2 border-emerald-600 py-6">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex justify-end mb-4">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Official Header - Enhanced */}
+        <div className="bg-white border-b-4 border-emerald-600 shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">لوحة مراجعة التقارير</h1>
+                  <p className="text-sm text-gray-600">مراجعة واعتماد التقارير الشهرية</p>
+                </div>
+              </div>
               <button
                 onClick={signOut}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 تسجيل الخروج
               </button>
             </div>
-            <div className="text-center">
-              <div className="flex justify-center items-center mb-4">
+            <div className="text-center border-t border-gray-200 pt-4">
+              <div className="flex justify-center items-center mb-3">
                 <img
                   src="/logo.png"
                   alt="شعار دائرة صحة كركوك"
-                  className="h-20 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                 />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-xl font-bold text-gray-800 mb-1">
                 دائرة صحة كركوك
               </h2>
-              <p className="text-lg text-gray-700 mb-1">قطاع كركوك الأول</p>
-              <p className="text-base text-gray-600 mb-4">وحدة تعزيز الصحة</p>
-              <h1 className="text-xl font-semibold text-emerald-700 border-t border-gray-200 pt-4">
-                لوحة مراجعة التقارير الشهرية
-              </h1>
+              <p className="text-base text-gray-700">قطاع كركوك الأول - وحدة تعزيز الصحة</p>
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto py-8 px-4">
+          {/* Messages */}
           {successMessage && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-800 flex items-center gap-3 shadow-md">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {successMessage}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-800 flex items-center gap-3 shadow-md">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {error}
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            {/* Filter */}
-            <div className="mb-6 flex gap-4 items-center">
-              <label className="text-sm font-semibold text-gray-700">تصفية حسب الحالة:</label>
+          {/* Filter Card */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+            <div className="flex flex-wrap gap-4 items-center">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                تصفية حسب الحالة:
+              </label>
               <select
                 value={statusFilter}
                 onChange={(e) =>
@@ -363,7 +385,7 @@ export default function AdminReportsPage() {
                     e.target.value as "all" | "submitted" | "approved" | "rejected"
                   )
                 }
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                className="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
               >
                 <option value="all">الكل</option>
                 <option value="submitted">قيد المراجعة</option>
@@ -371,104 +393,131 @@ export default function AdminReportsPage() {
                 <option value="rejected">مرفوض</option>
               </select>
             </div>
+          </div>
+
+          {/* Reports Table Card */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
 
             {loading ? (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-                <p className="mt-4 text-gray-600">جاري التحميل...</p>
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+                <p className="mt-4 text-gray-600 font-medium">جاري التحميل...</p>
               </div>
             ) : filteredReports.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">
-                <p className="text-lg">لا توجد تقارير</p>
+              <div className="text-center py-12 text-gray-500">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-lg font-medium">لا توجد تقارير</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-100 border-b-2 border-gray-300">
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    <tr className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
                         اسم المركز الصحي
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
                         الشهر / السنة
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
                         أرسل بواسطة
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
                         تاريخ الإرسال
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold">
                         الحالة
                       </th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-center text-sm font-bold">
                         الإجراء
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReports.map((report) => (
+                    {filteredReports.map((report, index) => (
                       <tr
                         key={report.id}
-                        className="border-b border-gray-200 hover:bg-gray-50"
+                        className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-emerald-50 transition-colors duration-150`}
                       >
-                        <td className="px-4 py-3 text-sm text-gray-800">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-800">
                           {report.health_center_name}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-800">
+                        <td className="px-6 py-4 text-sm text-gray-700">
                           {getMonthName(report.month)} / {report.year}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-800">
+                        <td className="px-6 py-4 text-sm text-gray-700">
                           {report.submitted_by_name || "غير معروف"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-800">
+                        <td className="px-6 py-4 text-sm text-gray-600">
                           {formatDate(report.created_at)}
                         </td>
-                        <td className="px-4 py-3">
-                          {getStatusBadge(report.status)}
-                          {report.status === "rejected" && report.rejection_reason && (
-                            <div className="mt-1 text-xs text-red-600">
-                              سبب: {report.rejection_reason}
-                            </div>
-                          )}
-                          {report.status === "approved" && report.approved_at && (
-                            <div className="mt-1 text-xs text-green-600">
-                              اعتمد في: {formatDate(report.approved_at)}
-                            </div>
-                          )}
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            {getStatusBadge(report.status)}
+                            {report.status === "rejected" && report.rejection_reason && (
+                              <div className="text-xs text-red-600 mt-1">
+                                <span className="font-semibold">سبب:</span> {report.rejection_reason}
+                              </div>
+                            )}
+                            {report.status === "approved" && report.approved_at && (
+                              <div className="text-xs text-green-600 mt-1">
+                                <span className="font-semibold">اعتمد في:</span> {formatDate(report.approved_at)}
+                              </div>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-6 py-4 text-center">
                           <div className="flex gap-2 justify-center">
                             {report.status === "submitted" && (
                               <>
                                 <button
                                   onClick={() => handleApprove(report.id)}
                                   disabled={approving === report.id}
-                                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                  className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
+                                  title="موافقة"
                                 >
-                                  {approving === report.id ? "..." : "✅ موافقة"}
+                                  {approving === report.id ? (
+                                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
                                 </button>
                                 <button
                                   onClick={() => openRejectModal(report.id)}
                                   disabled={rejecting === report.id}
-                                  className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
+                                  title="رفض"
                                 >
-                                  ❌ رفض
+                                  {rejecting === report.id ? (
+                                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  )}
                                 </button>
                               </>
                             )}
                             {report.status === "approved" && (
-                              <span className="text-sm text-green-600 font-medium">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 ✓ معتمد
                               </span>
                             )}
                             {report.status === "rejected" && (
-                              <span className="text-sm text-red-600 font-medium">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                 ✗ مرفوض
                               </span>
                             )}
                             {report.status === "draft" && (
-                              <span className="text-sm text-gray-500">مسودة</span>
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">مسودة</span>
                             )}
                           </div>
                         </td>
@@ -481,11 +530,18 @@ export default function AdminReportsPage() {
           </div>
         </div>
 
-        {/* Reject Modal */}
+        {/* Reject Modal - Enhanced */}
         {showRejectModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">رفض التقرير</h3>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl border-2 border-red-200 p-6 max-w-md w-full">
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">رفض التقرير</h3>
+              </div>
               <p className="text-sm text-gray-600 mb-4">
                 يرجى إدخال سبب رفض التقرير:
               </p>
@@ -493,7 +549,7 @@ export default function AdminReportsPage() {
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="أدخل سبب الرفض..."
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 mb-4"
+                className="w-full p-4 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-red-200 focus:border-red-500 mb-6 transition-all"
                 rows={4}
                 dir="rtl"
               />
@@ -504,16 +560,25 @@ export default function AdminReportsPage() {
                     setRejectReason("");
                     setSelectedReportId(null);
                   }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="px-4 py-2 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   إلغاء
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={!rejectReason.trim() || rejecting !== null}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {rejecting ? "جاري الرفض..." : "رفض"}
+                  {rejecting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      جاري الرفض...
+                    </span>
+                  ) : (
+                    "رفض"
+                  )}
                 </button>
               </div>
             </div>
