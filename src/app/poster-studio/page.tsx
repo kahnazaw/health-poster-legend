@@ -22,6 +22,22 @@ export default function PosterStudioPage() {
   const [isExporting, setIsExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
+  // تعبئة الخيارات من URL parameters (من المعرض)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const campaign = params.get("campaignType");
+      const audience = params.get("targetAudience");
+      const style = params.get("visualStyle");
+      const lang = params.get("language");
+
+      if (campaign) setCampaignType(campaign);
+      if (audience) setTargetAudience(audience);
+      if (style) setVisualStyle(style);
+      if (lang === "ar" || lang === "tr") setLanguage(lang);
+    }
+  }, []);
+
   const campaignTypes = [
     { value: "vaccination", label: "حملة تلقيح" },
     { value: "health_awareness", label: "توعية صحية" },
@@ -122,12 +138,26 @@ export default function PosterStudioPage() {
 
         // تحديث إحصائيات البوسترات في قاعدة البيانات
         try {
+          // توليد البرومبت التفصيلي
+          const { generateDetailedPrompt } = await import("@/lib/ai/geminiImageGenerator");
+          const detailedPrompt = generateDetailedPrompt({
+            campaignType,
+            targetAudience,
+            visualStyle,
+            language,
+            suggestedTitle: data.suggestedTitle,
+          });
+
           await supabase.from("poster_analytics").insert({
             user_id: user.id,
             campaign_type: campaignType,
             target_audience: targetAudience,
             visual_style: visualStyle,
             language: language,
+            suggested_title: data.suggestedTitle,
+            prompt: detailedPrompt,
+            image_url: data.imageUrl,
+            download_count: 0,
             generated_at: new Date().toISOString(),
           });
         } catch (error) {
