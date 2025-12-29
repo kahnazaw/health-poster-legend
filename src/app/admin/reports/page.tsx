@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
+import StatusBadge from "@/components/StatusBadge";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Report {
   id: string;
@@ -283,27 +285,12 @@ export default function AdminReportsPage() {
       : monthNumber;
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { label: "مسودة", className: "bg-gray-100 text-gray-800" },
-      submitted: { label: "قيد المراجعة", className: "bg-yellow-100 text-yellow-800" },
-      approved: { label: "موافق عليه", className: "bg-green-100 text-green-800" },
-      rejected: { label: "مرفوض", className: "bg-red-100 text-red-800" },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.className}`}>
-        {config.label}
-      </span>
-    );
-  };
-
-  const filteredReports = reports.filter((report) => {
-    if (statusFilter === "all") return true;
-    return report.status === statusFilter;
-  });
+  const filteredReports = useMemo(() => {
+    return reports.filter((report) => {
+      if (statusFilter === "all") return true;
+      return report.status === statusFilter;
+    });
+  }, [reports, statusFilter]);
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
@@ -399,10 +386,7 @@ export default function AdminReportsPage() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
 
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-                <p className="mt-4 text-gray-600 font-medium">جاري التحميل...</p>
-              </div>
+              <LoadingSpinner size="md" text="جاري التحميل..." />
             ) : filteredReports.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,10 +438,10 @@ export default function AdminReportsPage() {
                           {formatDate(report.created_at)}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            {getStatusBadge(report.status)}
+                          <div className="space-y-2">
+                            <StatusBadge status={report.status as "draft" | "submitted" | "approved" | "rejected"} size="md" />
                             {report.status === "rejected" && report.rejection_reason && (
-                              <div className="text-xs text-red-600 mt-1">
+                              <div className="text-xs text-red-600 mt-1 p-2 bg-red-50 rounded border border-red-200">
                                 <span className="font-semibold">سبب:</span> {report.rejection_reason}
                               </div>
                             )}
@@ -475,7 +459,7 @@ export default function AdminReportsPage() {
                                 <button
                                   onClick={() => handleApprove(report.id)}
                                   disabled={approving === report.id}
-                                  className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
+                                  className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
                                   title="موافقة"
                                 >
                                   {approving === report.id ? (
@@ -491,7 +475,7 @@ export default function AdminReportsPage() {
                                 <button
                                   onClick={() => openRejectModal(report.id)}
                                   disabled={rejecting === report.id}
-                                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
+                                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200 active:scale-95 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg group relative"
                                   title="رفض"
                                 >
                                   {rejecting === report.id ? (
@@ -507,17 +491,13 @@ export default function AdminReportsPage() {
                               </>
                             )}
                             {report.status === "approved" && (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                ✓ معتمد
-                              </span>
+                              <StatusBadge status="approved" size="md" />
                             )}
                             {report.status === "rejected" && (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                ✗ مرفوض
-                              </span>
+                              <StatusBadge status="rejected" size="md" />
                             )}
                             {report.status === "draft" && (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">مسودة</span>
+                              <StatusBadge status="draft" size="md" />
                             )}
                           </div>
                         </td>

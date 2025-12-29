@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AuditLog {
   id: string;
@@ -165,7 +166,20 @@ export default function AdminAuditLogPage() {
     return colors[action] || "bg-gray-100 text-gray-800";
   };
 
-  const filteredLogs = auditLogs;
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      // Filter by month/year if specified
+      if (monthFilter !== "all" && log.details?.month) {
+        const monthIndex = arabicMonths.indexOf(log.details.month);
+        const monthNumber = String(monthIndex + 1).padStart(2, "0");
+        if (monthNumber !== monthFilter) return false;
+      }
+      if (log.details?.year && log.details.year !== yearFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [auditLogs, monthFilter, yearFilter]);
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
@@ -285,10 +299,7 @@ export default function AdminAuditLogPage() {
           {/* Audit Logs Table Card */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-                <p className="mt-4 text-gray-600 font-medium">جاري التحميل...</p>
-              </div>
+              <LoadingSpinner size="md" text="جاري التحميل..." />
             ) : filteredLogs.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

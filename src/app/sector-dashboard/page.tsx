@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import StatusBadge from "@/components/StatusBadge";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Arabic month names (Iraqi traditional)
 const arabicMonths = [
@@ -353,29 +355,30 @@ export default function SectorDashboardPage() {
 
   // Statistics are now calculated above with approval status
 
-  // Calculate center activity rankings
-  const centerActivity = submissions
-    .map((submission) => {
-      const totalActivity =
-        (submission.totals?.individualSessions || 0) +
-        (submission.totals?.lectures || 0) +
-        (submission.totals?.seminars || 0);
-      return {
-        centerName: submission.centerName,
-        totalActivity,
-        individualSessions: submission.totals?.individualSessions || 0,
-        lectures: submission.totals?.lectures || 0,
-        seminars: submission.totals?.seminars || 0,
-        submitted: submission.submitted,
-      };
-    })
-    .sort((a, b) => b.totalActivity - a.totalActivity);
+  // Calculate center activity rankings - Memoized
+  const { centerActivity, topPerformers, bottomPerformers } = useMemo(() => {
+    const activity = submissions
+      .map((submission) => {
+        const totalActivity =
+          (submission.totals?.individualSessions || 0) +
+          (submission.totals?.lectures || 0) +
+          (submission.totals?.seminars || 0);
+        return {
+          centerName: submission.centerName,
+          totalActivity,
+          individualSessions: submission.totals?.individualSessions || 0,
+          lectures: submission.totals?.lectures || 0,
+          seminars: submission.totals?.seminars || 0,
+          submitted: submission.submitted,
+        };
+      })
+      .sort((a, b) => b.totalActivity - a.totalActivity);
 
-  const topPerformers = centerActivity.filter((c) => c.submitted).slice(0, 5);
-  const bottomPerformers = centerActivity
-    .filter((c) => c.submitted)
-    .slice(-5)
-    .reverse();
+    const top = activity.filter((c) => c.submitted).slice(0, 5);
+    const bottom = activity.filter((c) => c.submitted).slice(-5).reverse();
+
+    return { centerActivity: activity, topPerformers: top, bottomPerformers: bottom };
+  }, [submissions]);
 
   // Calculate category activity analysis
   const categoryNames: { [key: string]: string } = {
@@ -422,22 +425,27 @@ export default function SectorDashboardPage() {
     setCategoryActivity(activity);
   };
 
-  const categoryData = Object.entries(categoryActivity)
-    .map(([key, value]) => ({
-      name: categoryNames[key] || key,
-      value,
-    }))
-    .sort((a, b) => b.value - a.value);
+  const { categoryData, totalActivity } = useMemo(() => {
+    const data = Object.entries(categoryActivity)
+      .map(([key, value]) => ({
+        name: categoryNames[key] || key,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+    const total = centerActivity.reduce((sum, c) => sum + c.totalActivity, 0);
+    return { categoryData: data, totalActivity: total };
+  }, [categoryActivity, centerActivity]);
 
-  const totalActivity = centerActivity.reduce((sum, c) => sum + c.totalActivity, 0);
-
-  // Calculate approval statistics
-  const totalCenters = healthCenters.length;
-  const submittedCount = submissions.filter(s => s.submitted && s.status !== "draft").length;
-  const approvedCount = submissions.filter(s => s.status === "approved").length;
-  const rejectedCount = submissions.filter(s => s.status === "rejected").length;
-  const pendingCount = submissions.filter(s => s.status === "submitted").length;
-  const completionPercentage = totalCenters > 0 ? Math.round((approvedCount / totalCenters) * 100) : 0;
+  // Calculate approval statistics - Memoized
+  const { totalCenters, submittedCount, approvedCount, rejectedCount, pendingCount, completionPercentage } = useMemo(() => {
+    const total = healthCenters.length;
+    const submitted = submissions.filter(s => s.submitted && s.status !== "draft").length;
+    const approved = submissions.filter(s => s.status === "approved").length;
+    const rejected = submissions.filter(s => s.status === "rejected").length;
+    const pending = submissions.filter(s => s.status === "submitted").length;
+    const percentage = total > 0 ? Math.round((approved / total) * 100) : 0;
+    return { totalCenters: total, submittedCount: submitted, approvedCount: approved, rejectedCount: rejected, pendingCount: pending, completionPercentage: percentage };
+  }, [submissions]);
 
   const COLORS = [
     "#059669",
@@ -777,21 +785,10 @@ export default function SectorDashboardPage() {
                         {submission.centerName}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {(() => {
-                          const status = submission.status || (submission.submitted ? "submitted" : "draft");
-                          const statusConfig = {
-                            draft: { label: "مسودة", className: "bg-gray-100 text-gray-800" },
-                            submitted: { label: "قيد المراجعة", className: "bg-yellow-100 text-yellow-800" },
-                            approved: { label: "معتمد", className: "bg-green-100 text-green-800" },
-                            rejected: { label: "مرفوض", className: "bg-red-100 text-red-800" },
-                          };
-                          const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-                          return (
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.className}`}>
-                              {config.label}
-                            </span>
-                          );
-                        })()}
+                        <StatusBadge 
+                          status={(submission.status || (submission.submitted ? "submitted" : "draft")) as "draft" | "submitted" | "approved" | "rejected"} 
+                          size="md" 
+                        />
                       </td>
                       <td className="px-6 py-4 text-center text-sm text-gray-600">
                         {submission.submittedAt ? formatDate(submission.submittedAt) : "-"}
