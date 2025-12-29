@@ -28,26 +28,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/logo.png" />
       </head>
-      <body className="antialiased bg-gray-50 text-gray-900">
+      <body className="antialiased selection:bg-[#059669]/20">
         <AuthProvider>
-          <nav className="fixed top-0 left-0 right-0 z-[100] glass-nav h-20">
-            <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
-              <Link href="/" className="flex items-center gap-4 flex-shrink-0">
-                <div className="relative w-12 h-12 bg-white rounded-2xl p-1 shadow-sm border border-emerald-50">
-                  <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
+          <div className="animated-bg" /> {/* الخلفية المتحركة */}
+          
+          {/* هيدر آبل العائم */}
+          <nav className="fixed top-6 left-0 right-0 z-[100] px-6">
+            <div className="max-w-4xl mx-auto h-16 apple-glass rounded-full px-8 flex justify-between items-center shadow-2xl shadow-black/5">
+              <Link href="/" className="flex items-center gap-3 group">
+                <div className="relative w-10 h-10 bg-white rounded-xl p-1.5 shadow-sm border border-slate-100 group-hover:rotate-6 transition-transform">
+                  <Image src="/logo.png" alt="Logo" fill className="object-contain" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-lg font-black text-[#059669] leading-tight">دائرة صحة كركوك</span>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">قطاع كركوك الأول</span>
-                </div>
+                <span className="text-sm md:text-base font-black text-[#059669] font-tajawal">صحة كركوك</span>
               </Link>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <Link href="/login" className="hidden sm:block text-sm font-bold text-slate-600 px-4 whitespace-nowrap">دخول</Link>
-                <Link href="/signup" className="bg-[#059669] text-white px-6 py-2.5 rounded-full text-sm font-black shadow-lg shadow-emerald-500/20 whitespace-nowrap">ابدأ الآن</Link>
+              
+              <div className="flex items-center gap-2">
+                <Link href="/login" className="hidden sm:block text-xs font-bold text-slate-500 px-4">دخول</Link>
+                <Link href="/signup" className="bg-[#059669] text-white px-6 py-2 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-90 transition-transform whitespace-nowrap">ابدأ الآن</Link>
               </div>
             </div>
           </nav>
-          <main className="pt-20">{children}</main>
+          
+          <main className="pt-32 pb-20">{children}</main>
           <BottomNav />
           <PWAInstallPrompt />
         </AuthProvider>

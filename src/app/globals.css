@@ -1,11 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap');
-
 @import "tailwindcss";
 
 @theme {
   --color-primary: #059669;
-  --color-primary-dark: #047857;
-  --color-bg-light: #f8fafc;
+  --color-glass: rgba(255, 255, 255, 0.5);
 }
 
 :root {
@@ -37,8 +34,8 @@
 
 body {
   font-family: var(--font-vazirmatn);
-  background-color: var(--color-bg-light);
-  color: #1e293b;
+  background: #ffffff;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -47,6 +44,41 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-tajawal);
   font-weight: 700;
+}
+
+/* خلفية Mesh Gradient متحركة تشبه آبل */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(at 0% 0%, rgba(5, 150, 105, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+  filter: blur(80px);
+  animation: bg-pulse 15s ease infinite alternate;
+}
+
+@keyframes bg-pulse {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.1) translate(2%, 2%); }
+}
+
+/* تأثير الزجاج الفائق (Ultra Glass) */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* بطاقة آبل التفاعلية */
+.apple-card {
+  @apply rounded-[3.5rem] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_30px_60px_rgba(0,0,0,0.03)]
+         hover:shadow-[0_40px_80px_rgba(5,150,105,0.1)] transition-all duration-700;
 }
 
 /* تأثير الزجاج الفاخر */
@@ -161,4 +193,9 @@ h1, h2, h3, h4, h5, h6 {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
   }
+}
+
+/* Selection Color */
+::selection {
+  background-color: rgba(5, 150, 105, 0.2);
 }
