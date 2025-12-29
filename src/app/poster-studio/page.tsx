@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Image as ImageIcon, Palette, Zap, Download, Globe, QrCode, Search, Building2, BookOpen, LayoutGrid, Clock, Target, List, Hash, CheckCircle } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Palette, Zap, Download, Globe, QrCode, Search, Building2, BookOpen, LayoutGrid, Clock, Target, List, Hash, CheckCircle, Share2 } from "lucide-react";
 import Image from "next/image";
 import { generateQRCodeDataUrl } from "@/lib/utils/qrCodeGenerator";
 import { toPng } from "html-to-image";
@@ -197,6 +197,48 @@ export default function PosterStudioPage() {
       alert(`حدث خطأ أثناء توليد الإنفوجرافيك: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleShareToChat = async () => {
+    if (!posterRef.current || !suggestedTitle) {
+      alert("يرجى توليد البوستر أولاً");
+      return;
+    }
+
+    try {
+      // تصدير البوستر كصورة
+      const dataUrl = await toPng(posterRef.current, {
+        pixelRatio: 2,
+        quality: 1,
+        backgroundColor: "#ffffff",
+      });
+
+      // إرسال الرسالة إلى القناة العامة
+      const { error } = await supabase.from("chat_messages").insert({
+        room_id: "00000000-0000-0000-0000-000000000001", // القناة العامة
+        user_id: user?.id,
+        content: `تم توليد بوستر جديد: ${suggestedTitle}`,
+        message_type: "poster",
+        metadata: {
+          title: suggestedTitle,
+          topic: topic,
+          healthCenterName: healthCenterName,
+          imageUrl: dataUrl,
+          microLearningPoints: microLearningPoints,
+          sources: sources,
+        },
+      });
+
+      if (error) throw error;
+
+      alert("✅ تم مشاركة البوستر في القناة العامة!");
+      
+      // توجيه إلى صفحة الدردشة
+      window.location.href = "/chat";
+    } catch (error: any) {
+      console.error("Error sharing poster:", error);
+      alert(`حدث خطأ أثناء مشاركة البوستر: ${error.message}`);
     }
   };
 
@@ -869,11 +911,19 @@ export default function PosterStudioPage() {
                       {/* أزرار الإجراءات */}
                       {illustrations.length > 0 && (
                 <div className="mt-4 space-y-3">
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={handleShareToChat}
+                      disabled={!suggestedTitle || isExporting}
+                      className="py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span>مشاركة</span>
+                    </button>
                     <button
                       onClick={() => handleExport("png")}
                       disabled={isExporting}
-                      className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isExporting ? (
                         <>
@@ -883,14 +933,14 @@ export default function PosterStudioPage() {
                       ) : (
                         <>
                           <Download className="w-4 h-4" />
-                          <span>تحميل PNG (دقة عالية)</span>
+                          <span>PNG</span>
                         </>
                       )}
                     </button>
                     <button
                       onClick={() => handleExport("pdf")}
                       disabled={isExporting}
-                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isExporting ? (
                         <>
@@ -900,7 +950,7 @@ export default function PosterStudioPage() {
                       ) : (
                         <>
                           <Download className="w-4 h-4" />
-                          <span>تحميل PDF</span>
+                          <span>PDF</span>
                         </>
                       )}
                     </button>
