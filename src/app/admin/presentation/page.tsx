@@ -1,324 +1,521 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
+import { useAuth } from "@/contexts/AuthContext";
+import { Trophy, Award, TrendingUp, Calendar, Maximize2, Download, Zap, Users, Presentation, UsersRound, BarChart3 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import { calculatePeriodScore } from "@/lib/analytics/scoringEngine";
+
+interface CenterRanking {
+  center_id: string;
+  center_name: string;
+  score: number;
+  rank: number;
+  total_meetings: number;
+  total_lectures: number;
+  total_seminars: number;
+  total_posters: number;
+  previousScore: number;
+  scoreChange: number;
+}
+
+interface TopicDistribution {
+  topic: string;
+  category: string;
+  value: number;
+  percentage: number;
+}
+
+interface MonthlyTrend {
+  month: string;
+  totalScore: number;
+  totalMeetings: number;
+  totalLectures: number;
+  totalSeminars: number;
+}
 
 export default function PresentationPage() {
-  const { profile } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  const { user, profile } = useAuth();
+  const [rankings, setRankings] = useState<CenterRanking[]>([]);
+  const [topicDistribution, setTopicDistribution] = useState<TopicDistribution[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [totalStats, setTotalStats] = useState({
+    totalMeetings: 0,
+    totalLectures: 0,
+    totalSeminars: 0,
+    totalPosters: 0,
+    totalScore: 0,
+  });
 
   useEffect(() => {
-    loadStatistics();
-  }, [selectedYear, selectedMonth]);
+    if (user && profile?.role === "admin") {
+      initializeMonths();
+    }
+  }, [user, profile]);
 
-  const loadStatistics = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (selectedMonth) {
+      fetchPresentationData();
+    }
+  }, [selectedMonth]);
+
+  const initializeMonths = () => {
+    const today = new Date();
+    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(currentMonth);
+  };
+
+  const fetchPresentationData = async () => {
+    setIsLoading(true);
     try {
-      let query = supabase
-        .from("monthly_statistics")
-        .select("*")
-        .eq("year", selectedYear);
+      const [year, month] = selectedMonth.split("-");
+      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-      if (selectedMonth !== "all") {
-        query = query.eq("month", selectedMonth);
+      // جلب بيانات الشهر الحالي
+      const currentData = await fetchMonthData(startDate, endDate);
+
+      // جلب بيانات الشهر السابق للمقارنة
+      const previousStartDate = new Date(parseInt(year), parseInt(month) - 2, 1);
+      const previousEndDate = new Date(parseInt(year), parseInt(month) - 1, 0);
+      const previousData = await fetchMonthData(previousStartDate, previousEndDate);
+
+      // حساب التغييرات
+      const rankingsWithChanges = currentData.rankings.map((current) => {
+        const previous = previousData.rankings.find((p) => p.center_id === current.center_id);
+        const previousScore = previous?.score || 0;
+        return {
+          ...current,
+          previousScore,
+          scoreChange: current.score - previousScore,
+        };
+      });
+
+      setRankings(rankingsWithChanges);
+      setTopicDistribution(currentData.topicDistribution);
+      setTotalStats(currentData.totalStats);
+    } catch (error: any) {
+      console.error("Error fetching presentation data:", error);
+      alert("حدث خطأ أثناء جلب البيانات");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMonthData = async (startDate: Date, endDate: Date) => {
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    // جلب الإحصائيات
+    const { data: statsData } = await supabase
+      .from("daily_statistics")
+      .select(`
+        center_id,
+        individual_meetings,
+        lectures,
+        seminars,
+        profiles!inner(full_name, health_center_name),
+        health_topics!inner(topic_name, category_name)
+      `)
+      .gte("entry_date", startDateStr)
+      .lte("entry_date", endDateStr);
+
+    // جلب البوسترات
+    const { data: postersData } = await supabase
+      .from("poster_analytics")
+      .select("user_id")
+      .gte("generated_at", startDate.toISOString())
+      .lte("generated_at", endDate.toISOString());
+
+    // تجميع البيانات
+    const centerMap = new Map<string, any>();
+    const topicMap = new Map<string, { topic: string; category: string; value: number }>();
+
+    statsData?.forEach((stat: any) => {
+      const centerId = stat.center_id;
+      const centerName = stat.profiles?.health_center_name || stat.profiles?.full_name || "غير معروف";
+
+      if (!centerMap.has(centerId)) {
+        centerMap.set(centerId, {
+          center_id: centerId,
+          center_name: centerName,
+          total_meetings: 0,
+          total_lectures: 0,
+          total_seminars: 0,
+          total_posters: 0,
+        });
       }
 
-      const { data, error } = await query;
+      const center = centerMap.get(centerId);
+      center.total_meetings += stat.individual_meetings || 0;
+      center.total_lectures += stat.lectures || 0;
+      center.total_seminars += stat.seminars || 0;
 
-      if (error) throw error;
+      // تجميع المواضيع
+      const topicName = stat.health_topics?.topic_name || "غير معروف";
+      const category = stat.health_topics?.category_name || "عام";
+      const activity = (stat.individual_meetings || 0) + (stat.lectures || 0) + (stat.seminars || 0);
 
-      // Calculate statistics
-      const totalReports = data?.length || 0;
-      const approved = data?.filter((r) => r.status === "approved").length || 0;
-      const pending = data?.filter((r) => r.status === "submitted").length || 0;
-      const rejected = data?.filter((r) => r.status === "rejected").length || 0;
-      const draft = data?.filter((r) => r.status === "draft").length || 0;
-
-      // Get unique users (reports are now per user, not per center)
-      const userIds = new Set(data?.map((r) => r.user_id).filter(Boolean) || []);
-      const totalCenters = userIds.size;
-
-      // Calculate totals from statistics_data
-      let totalIndividualSessions = 0;
-      let totalLectures = 0;
-      let totalSeminars = 0;
-
-      data?.forEach((report) => {
-        if (report.statistics_data?.data) {
-          const stats = report.statistics_data.data;
-          if (Array.isArray(stats)) {
-            stats.forEach((item: any) => {
-              totalIndividualSessions += item.individualSessions || 0;
-              totalLectures += item.lectures || 0;
-              totalSeminars += item.seminars || 0;
-            });
-          }
-        }
-      });
-
-      setStats({
-        totalReports,
-        approved,
-        pending,
-        rejected,
-        draft,
-        totalCenters,
-        totalIndividualSessions,
-        totalLectures,
-        totalSeminars,
-        approvalRate: totalReports > 0 ? Math.round((approved / totalReports) * 100) : 0,
-        submissionRate: totalCenters > 0 ? Math.round((totalReports / totalCenters) * 100) : 0,
-      });
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading statistics:", error);
-      setLoading(false);
-    }
-  };
-
-  const generatePresentationPDF = async () => {
-    if (!stats) return;
-
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
+      if (!topicMap.has(topicName)) {
+        topicMap.set(topicName, { topic: topicName, category, value: 0 });
+      }
+      topicMap.get(topicName)!.value += activity;
     });
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    let yPos = margin;
+    // حساب البوسترات
+    const postersMap = new Map<string, number>();
+    postersData?.forEach((poster: any) => {
+      const userId = poster.user_id;
+      postersMap.set(userId, (postersMap.get(userId) || 0) + 1);
+    });
 
-    const addText = (text: string, x: number, y: number, options?: any) => {
-      doc.text(text, x, y, { ...options, align: options?.align || "right" });
+    // حساب النقاط
+    const rankings = Array.from(centerMap.values())
+      .map((center) => {
+        const postersCount = postersMap.get(center.center_id) || 0;
+        center.total_posters = postersCount;
+
+        const scoreResult = calculatePeriodScore({
+          totalMeetings: center.total_meetings,
+          totalLectures: center.total_lectures,
+          totalSeminars: center.total_seminars,
+          totalPosters: postersCount,
+        });
+
+        return {
+          ...center,
+          score: scoreResult.normalizedScore,
+          rank: 0,
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map((center, index) => ({
+        ...center,
+        rank: index + 1,
+      }));
+
+    // توزيع المواضيع
+    const totalActivity = Array.from(topicMap.values()).reduce((sum, t) => sum + t.value, 0);
+    const topicDistribution = Array.from(topicMap.values())
+      .map((t) => ({
+        topic: t.topic,
+        category: t.category,
+        value: t.value,
+        percentage: totalActivity > 0 ? (t.value / totalActivity) * 100 : 0,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    // الإجماليات
+    const totalStats = {
+      totalMeetings: rankings.reduce((sum, c) => sum + c.total_meetings, 0),
+      totalLectures: rankings.reduce((sum, c) => sum + c.total_lectures, 0),
+      totalSeminars: rankings.reduce((sum, c) => sum + c.total_seminars, 0),
+      totalPosters: rankings.reduce((sum, c) => sum + c.total_posters, 0),
+      totalScore: rankings.reduce((sum, c) => sum + c.score, 0),
     };
 
-    // Cover Slide
-    doc.setFillColor(5, 150, 105);
-    doc.rect(0, 0, pageWidth, 60, "F");
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(28);
-    doc.setFont("helvetica", "bold");
-    addText("عرض تقديمي للإدارة العليا", pageWidth - margin, 35);
-    
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "normal");
-    addText("نظام إدارة إحصائيات المراكز الصحية", pageWidth - margin, 50);
+    // الاتجاه الشهري سيتم حسابه منفصلاً
+    const monthlyTrend: MonthlyTrend[] = [];
 
-    doc.setTextColor(0, 0, 0);
-    yPos = 70;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    addText(`السنة: ${selectedYear}`, pageWidth - margin, yPos);
-    yPos += 8;
-    if (selectedMonth !== "all") {
-      addText(`الشهر: ${selectedMonth}`, pageWidth - margin, yPos);
-      yPos += 8;
-    }
-    addText(`تاريخ الإنشاء: ${new Date().toLocaleDateString("ar-IQ")}`, pageWidth - margin, yPos);
-    yPos += 15;
-
-    // Slide 2: Executive Summary
-    doc.addPage();
-    yPos = margin;
-
-    doc.setFillColor(5, 150, 105);
-    doc.rect(0, 0, pageWidth, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    addText("ملخص تنفيذي", pageWidth - margin, 15);
-
-    doc.setTextColor(0, 0, 0);
-    yPos = 30;
-
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    addText("المؤشرات الرئيسية", pageWidth - margin, yPos);
-    yPos += 10;
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    addText(`إجمالي التقارير: ${stats.totalReports}`, pageWidth - margin, yPos);
-    yPos += 8;
-    addText(`إجمالي المراكز الصحية: ${stats.totalCenters}`, pageWidth - margin, yPos);
-    yPos += 8;
-    addText(`نسبة الإرسال: ${stats.submissionRate}%`, pageWidth - margin, yPos);
-    yPos += 8;
-    addText(`نسبة الاعتماد: ${stats.approvalRate}%`, pageWidth - margin, yPos);
-    yPos += 15;
-
-    // Slide 3: Status Breakdown
-    doc.addPage();
-    yPos = margin;
-
-    doc.setFillColor(5, 150, 105);
-    doc.rect(0, 0, pageWidth, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    addText("توزيع الحالات", pageWidth - margin, 15);
-
-    doc.setTextColor(0, 0, 0);
-    yPos = 30;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    addText(`معتمد: ${stats.approved} (${Math.round((stats.approved / stats.totalReports) * 100)}%)`, pageWidth - margin, yPos);
-    yPos += 10;
-    addText(`قيد المراجعة: ${stats.pending} (${Math.round((stats.pending / stats.totalReports) * 100)}%)`, pageWidth - margin, yPos);
-    yPos += 10;
-    addText(`مرفوض: ${stats.rejected} (${Math.round((stats.rejected / stats.totalReports) * 100)}%)`, pageWidth - margin, yPos);
-    yPos += 10;
-    addText(`مسودة: ${stats.draft} (${Math.round((stats.draft / stats.totalReports) * 100)}%)`, pageWidth - margin, yPos);
-    yPos += 15;
-
-    // Slide 4: Activity Summary
-    doc.addPage();
-    yPos = margin;
-
-    doc.setFillColor(5, 150, 105);
-    doc.rect(0, 0, pageWidth, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    addText("ملخص النشاط", pageWidth - margin, 15);
-
-    doc.setTextColor(0, 0, 0);
-    yPos = 30;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    addText(`الجلسات الفردية: ${stats.totalIndividualSessions.toLocaleString()}`, pageWidth - margin, yPos);
-    yPos += 10;
-    addText(`المحاضرات: ${stats.totalLectures.toLocaleString()}`, pageWidth - margin, yPos);
-    yPos += 10;
-    addText(`الندوات: ${stats.totalSeminars.toLocaleString()}`, pageWidth - margin, yPos);
-    yPos += 10;
-
-    const totalActivity = stats.totalIndividualSessions + stats.totalLectures + stats.totalSeminars;
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    addText(`الإجمالي: ${totalActivity.toLocaleString()}`, pageWidth - margin, yPos);
-    yPos += 15;
-
-    // Footer
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "italic");
-    addText("قطاع كركوك الأول - المنصة الإدارية", pageWidth - margin, pageHeight - 10);
-    addText(`صفحة ${doc.internal.pages.length}`, margin, pageHeight - 10);
-
-    doc.save(`عرض_تقديمي_${selectedYear}_${new Date().getTime()}.pdf`);
+    return { rankings, topicDistribution, totalStats };
   };
 
-  const arabicMonths = [
-    "كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران",
-    "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول"
-  ];
+  const fetchMonthlyTrend = async (year: number, month: number): Promise<MonthlyTrend[]> => {
+    const trend: MonthlyTrend[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(year, month - 1 - i, 1);
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+      const monthStartStr = monthStart.toISOString().split("T")[0];
+      const monthEndStr = monthEnd.toISOString().split("T")[0];
+
+      // جلب بيانات الشهر
+      const { data: statsData } = await supabase
+        .from("daily_statistics")
+        .select("individual_meetings, lectures, seminars")
+        .gte("entry_date", monthStartStr)
+        .lte("entry_date", monthEndStr);
+
+      const { data: postersData } = await supabase
+        .from("poster_analytics")
+        .select("user_id")
+        .gte("generated_at", monthStart.toISOString())
+        .lte("generated_at", monthEnd.toISOString());
+
+      const monthStats = {
+        totalMeetings: statsData?.reduce((sum, s) => sum + (s.individual_meetings || 0), 0) || 0,
+        totalLectures: statsData?.reduce((sum, s) => sum + (s.lectures || 0), 0) || 0,
+        totalSeminars: statsData?.reduce((sum, s) => sum + (s.seminars || 0), 0) || 0,
+        totalPosters: postersData?.length || 0,
+      };
+
+      const monthScore = calculatePeriodScore({
+        totalMeetings: monthStats.totalMeetings,
+        totalLectures: monthStats.totalLectures,
+        totalSeminars: monthStats.totalSeminars,
+        totalPosters: monthStats.totalPosters,
+      });
+
+      trend.push({
+        month: monthDate.toLocaleDateString("ar", { month: "short", year: "numeric" }),
+        totalScore: monthScore.normalizedScore * 23, // تقدير إجمالي القطاع
+        totalMeetings: monthStats.totalMeetings,
+        totalLectures: monthStats.totalLectures,
+        totalSeminars: monthStats.totalSeminars,
+      });
+    }
+
+    return trend;
+  };
+
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleDownload = () => {
+    // سيتم تنفيذ هذا لاحقاً
+    alert("سيتم إضافة وظيفة التحميل قريباً");
+  };
+
+  const COLORS = ["#059669", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#10b981", "#f97316", "#6366f1"];
+
+  const topThree = rankings.slice(0, 3);
+  const champions = rankings
+    .filter((c) => c.scoreChange > 0)
+    .sort((a, b) => b.scoreChange - a.scoreChange)
+    .slice(0, 5);
 
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 pb-24 md:pb-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 md:p-8 mb-6">
-            <div className="text-center mb-8">
-              <div className="inline-flex p-4 bg-blue-100 rounded-full mb-4">
-                <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">عرض تقديمي للإدارة العليا</h1>
-              <p className="text-gray-600">إنشاء عرض تقديمي شامل للمؤشرات والإحصائيات</p>
+    <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 ${isFullscreen ? "fixed inset-0 z-50" : ""}`}>
+      {/* الهيدر */}
+      <header className="bg-black/40 backdrop-blur-lg border-b border-emerald-500/20 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-black text-emerald-400 font-tajawal flex items-center gap-3">
+                <BarChart3 className="w-8 h-8" />
+                لوحة عرض النتائج الشهرية
+              </h1>
+              <p className="text-sm text-gray-400 mt-1">قطاع كركوك الأول - عرض تفاعلي للاجتماعات</p>
             </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">السنة</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500"
-                >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">الشهر</label>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500"
-                >
-                  <option value="all">جميع الأشهر</option>
-                  {arabicMonths.map((month, index) => (
-                    <option key={index} value={String(index + 1).padStart(2, "0")}>{month}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={loadStatistics}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all duration-200 disabled:bg-gray-400"
-                >
-                  {loading ? "جاري التحميل..." : "تحديث البيانات"}
-                </button>
-              </div>
-            </div>
-
-            {/* Statistics Preview */}
-            {stats && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border-2 border-blue-200">
-                  <div className="text-sm text-gray-600 mb-1">إجمالي التقارير</div>
-                  <div className="text-3xl font-bold text-blue-600">{stats.totalReports}</div>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border-2 border-green-200">
-                  <div className="text-sm text-gray-600 mb-1">معتمد</div>
-                  <div className="text-3xl font-bold text-green-600">{stats.approved}</div>
-                </div>
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-xl border-2 border-yellow-200">
-                  <div className="text-sm text-gray-600 mb-1">قيد المراجعة</div>
-                  <div className="text-3xl font-bold text-yellow-600">{stats.pending}</div>
-                </div>
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-xl border-2 border-emerald-200">
-                  <div className="text-sm text-gray-600 mb-1">نسبة الاعتماد</div>
-                  <div className="text-3xl font-bold text-emerald-600">{stats.approvalRate}%</div>
-                </div>
-              </div>
-            )}
-
-            {/* Generate Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={generatePresentationPDF}
-                disabled={!stats || loading}
-                className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-4 py-2 bg-gray-800 border-2 border-emerald-500/30 rounded-xl text-emerald-400 font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>تحميل العرض التقديمي (PDF)</span>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() - i);
+                  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+                  const label = date.toLocaleDateString("ar", { month: "long", year: "numeric" });
+                  return (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+              <button
+                onClick={handleFullscreen}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+              >
+                <Maximize2 className="w-5 h-5" />
+                ملء الشاشة
+              </button>
+              <button
+                onClick={handleDownload}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                تحميل
               </button>
             </div>
           </div>
         </div>
-      </main>
-    </ProtectedRoute>
+      </header>
+
+      {/* المحتوى الرئيسي */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400"></div>
+              <p className="mt-4 text-gray-400">جاري تحميل البيانات...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* عدادات الإنجاز الكلي */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {[
+                { label: "إجمالي النقاط", value: totalStats.totalScore.toFixed(0), icon: Trophy, color: "emerald" },
+                { label: "اللقاءات الفردية", value: totalStats.totalMeetings.toLocaleString(), icon: Users, color: "blue" },
+                { label: "المحاضرات", value: totalStats.totalLectures.toLocaleString(), icon: Presentation, color: "orange" },
+                { label: "الندوات", value: totalStats.totalSeminars.toLocaleString(), icon: UsersRound, color: "purple" },
+                { label: "البوسترات الذكية", value: totalStats.totalPosters.toLocaleString(), icon: Zap, color: "pink" },
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-emerald-500/20 shadow-2xl"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <stat.icon className={`w-8 h-8 text-${stat.color}-400`} />
+                    <span className="text-xs text-gray-400 font-semibold">{stat.label}</span>
+                  </div>
+                  <motion.p
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                    className="text-4xl font-black text-white"
+                  >
+                    {stat.value}
+                  </motion.p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* منصة التتويج */}
+            {topThree.length > 0 && (
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
+                <h2 className="text-2xl font-black text-emerald-400 font-tajawal mb-8 text-center flex items-center justify-center gap-3">
+                  <Trophy className="w-7 h-7" />
+                  منصة التتويج - المراكز الثلاثة الأولى
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {topThree.map((center, index) => {
+                    const positions = [
+                      { order: 2, height: "h-32", color: "from-yellow-600 to-yellow-500", medal: "🥇" },
+                      { order: 1, height: "h-40", color: "from-gray-400 to-gray-500", medal: "🥈" },
+                      { order: 3, height: "h-28", color: "from-orange-600 to-orange-500", medal: "🥉" },
+                    ];
+                    const pos = positions[index];
+
+                    return (
+                      <motion.div
+                        key={center.center_id}
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.2, type: "spring" }}
+                        className={`order-${pos.order} flex flex-col items-center`}
+                      >
+                        <div className={`w-full ${pos.height} bg-gradient-to-b ${pos.color} rounded-t-2xl flex items-end justify-center pb-4 border-2 border-white/20 shadow-xl`}>
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">{pos.medal}</div>
+                            <div className="text-5xl font-black text-white">{center.rank}</div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-800 rounded-b-2xl p-6 border-t-0 border-2 border-white/20">
+                          <h3 className="text-xl font-black text-white text-center mb-2">{center.center_name}</h3>
+                          <div className="text-center">
+                            <p className="text-3xl font-black text-emerald-400 mb-1">{center.score.toFixed(1)}</p>
+                            <p className="text-sm text-gray-400">نقطة</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* خريطة المواضيع */}
+            {topicDistribution.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-emerald-500/20 shadow-2xl"
+                >
+                  <h2 className="text-xl font-black text-emerald-400 font-tajawal mb-6">توزيع المواضيع</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={topicDistribution as any}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ percentage }: any) => `${percentage.toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {topicDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-emerald-500/20 shadow-2xl"
+                >
+                  <h2 className="text-xl font-black text-emerald-400 font-tajawal mb-6">مؤشر النبض الشهري</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={monthlyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="month" stroke="#9ca3af" />
+                      <YAxis stroke="#9ca3af" />
+                      <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #059669" }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="totalScore" stroke="#059669" strokeWidth={3} dot={{ fill: "#059669" }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              </div>
+            )}
+
+            {/* أبطال الشهر */}
+            {champions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-emerald-500/20 shadow-2xl"
+              >
+                <h2 className="text-xl font-black text-emerald-400 font-tajawal mb-6 flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6" />
+                  أبطال الشهر - أعلى قفزة في الأداء
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {champions.map((champion, index) => (
+                    <div
+                      key={champion.center_id}
+                      className="bg-gray-700/50 rounded-xl p-4 border border-emerald-500/20"
+                    >
+                      <div className="text-center">
+                        <p className="text-sm text-gray-400 mb-1">{champion.center_name}</p>
+                        <p className="text-2xl font-black text-emerald-400">+{champion.scoreChange.toFixed(1)}</p>
+                        <p className="text-xs text-gray-500">نقطة إضافية</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
-
