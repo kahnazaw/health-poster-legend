@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { generateApprovedReportPDF } from "@/lib/pdfGenerator";
 
 /* =========================
    Constants
@@ -60,6 +61,9 @@ interface ReportInfo {
   status: ReportStatus;
   rejection_reason: string | null;
   approved_at: string | null;
+  approved_by: string | null;
+  report_id: string | null;
+  statistics_data: any;
 }
 
 export default function StatisticsPage() {
@@ -84,7 +88,7 @@ export default function StatisticsPage() {
 
         const { data, error } = await supabase
           .from("monthly_statistics")
-          .select("status, rejection_reason, approved_at")
+          .select("id, status, rejection_reason, approved_at, approved_by, statistics_data")
           .eq("health_center_name", profile.health_center_name)
           .eq("month", monthNumber)
           .eq("year", currentYear)
@@ -94,16 +98,33 @@ export default function StatisticsPage() {
         if (error && error.code !== "PGRST116") { // PGRST116 = no rows returned
           console.error("Error loading report status:", error);
         } else if (data) {
+          // Load approved_by name if exists
+          let approvedByName = null;
+          if (data.approved_by) {
+            const { data: approverProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", data.approved_by)
+              .single();
+            approvedByName = approverProfile?.full_name || null;
+          }
+
           setReportInfo({
             status: data.status as ReportStatus,
             rejection_reason: data.rejection_reason,
             approved_at: data.approved_at,
+            approved_by: data.approved_by,
+            report_id: data.id,
+            statistics_data: data.statistics_data,
           });
         } else {
           setReportInfo({
             status: "draft",
             rejection_reason: null,
             approved_at: null,
+            approved_by: null,
+            report_id: null,
+            statistics_data: null,
           });
         }
       } catch (error) {
@@ -112,6 +133,9 @@ export default function StatisticsPage() {
           status: "draft",
           rejection_reason: null,
           approved_at: null,
+          approved_by: null,
+          report_id: null,
+          statistics_data: null,
         });
       } finally {
         setLoadingReport(false);
@@ -258,16 +282,30 @@ export default function StatisticsPage() {
           }
         }
 
-        // Reload report status
-        setReportInfo({
-          status: "submitted",
-          rejection_reason: null,
-          approved_at: null,
-        });
-
         // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
+        }
+
+        // Reload report status (reuse monthNumber from above)
+        const { data: updatedData } = await supabase
+          .from("monthly_statistics")
+          .select("id, status, rejection_reason, approved_at, approved_by, statistics_data")
+          .eq("health_center_name", healthCenterName)
+          .eq("month", monthNumber)
+          .eq("year", currentYear)
+          .eq("user_id", user.id)
+          .single();
+
+        if (updatedData) {
+          setReportInfo({
+            status: updatedData.status as ReportStatus,
+            rejection_reason: updatedData.rejection_reason,
+            approved_at: updatedData.approved_at,
+            approved_by: updatedData.approved_by,
+            report_id: updatedData.id,
+            statistics_data: updatedData.statistics_data,
+          });
         }
 
         alert("تم إرسال التقرير بنجاح! سيتم مراجعته من قبل إدارة القطاع.");
@@ -277,6 +315,38 @@ export default function StatisticsPage() {
       }
     };
     reader.readAsBinaryString(file);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!reportInfo || !profile || reportInfo.status !== "approved") {
+      alert("التقرير غير معتمد بعد");
+      return;
+    }
+
+    try {
+      // Load approved_by name if not already loaded
+      let approvedByName = null;
+      if (reportInfo.approved_by) {
+        const { data: approverProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", reportInfo.approved_by)
+          .single();
+        approvedByName = approverProfile?.full_name || null;
+      }
+
+      await generateApprovedReportPDF({
+        healthCenterName: profile.health_center_name,
+        month: selectedMonth,
+        year: currentYear,
+        statisticsData: reportInfo.statistics_data,
+        approvedAt: reportInfo.approved_at,
+        approvedByName: approvedByName,
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   return (
@@ -313,6 +383,16 @@ export default function StatisticsPage() {
             <p className="text-sm text-gray-600 mt-2">
               تم الاعتماد في: {new Date(reportInfo.approved_at).toLocaleDateString("ar-IQ")}
             </p>
+          )}
+          {reportInfo.status === "approved" && (
+            <div className="mt-4">
+              <button
+                onClick={handleDownloadPDF}
+                className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors shadow-md"
+              >
+                📄 تحميل PDF المعتمد
+              </button>
+            </div>
           )}
         </div>
       )}
