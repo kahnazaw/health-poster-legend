@@ -243,7 +243,31 @@ export default function ChatPage() {
 
       if (error) throw error;
 
+      const messageContent = newMessage.trim();
       setNewMessage("");
+
+      // استدعاء المساعد الآلي (فقط في القنوات العامة والمجموعات)
+      const currentRoom = rooms.find((r) => r.id === selectedRoom);
+      if (currentRoom && (currentRoom.type === "public" || currentRoom.type === "group")) {
+        // انتظر قليلاً ثم استدع المساعد
+        setTimeout(async () => {
+          try {
+            await fetch("/api/chat/bot", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                message: messageContent,
+                userId: user.id,
+                roomId: selectedRoom,
+              }),
+            });
+          } catch (error) {
+            console.error("Error calling bot:", error);
+          }
+        }, 1000);
+      }
     } catch (error: any) {
       console.error("Error sending message:", error);
       alert("حدث خطأ أثناء إرسال الرسالة");
@@ -399,13 +423,22 @@ export default function ChatPage() {
                       animate={{ opacity: 1, y: 0 }}
                       className={`flex gap-3 ${message.user_id === user?.id ? "flex-row-reverse" : ""}`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">
-                        {message.user_name?.charAt(0) || "?"}
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                          message.user_name === "مساعد قطاع كركوك الأول" ? "bg-purple-600" : "bg-emerald-600"
+                        }`}
+                      >
+                        {message.user_name === "مساعد قطاع كركوك الأول" ? "🤖" : message.user_name?.charAt(0) || "?"}
                       </div>
                       <div className={`flex-1 ${message.user_id === user?.id ? "text-right" : ""}`}>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900">{message.user_name}</span>
-                          {message.user_center && (
+                          {message.user_name === "مساعد قطاع كركوك الأول" && (
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                              مساعد ذكي
+                            </span>
+                          )}
+                          {message.user_center && message.user_name !== "مساعد قطاع كركوك الأول" && (
                             <span className="text-xs text-gray-500">{message.user_center}</span>
                           )}
                           <span className="text-xs text-gray-400">
@@ -419,10 +452,35 @@ export default function ChatPage() {
                           className={`inline-block px-4 py-2 rounded-2xl ${
                             message.user_id === user?.id
                               ? "bg-emerald-600 text-white"
+                              : message.user_name === "مساعد قطاع كركوك الأول"
+                              ? "bg-purple-50 border-2 border-purple-200 text-gray-900"
                               : "bg-white border border-gray-200 text-gray-900"
                           }`}
                         >
-                          {message.content}
+                          {message.message_type === "poster" && message.metadata?.imageUrl ? (
+                            <div className="space-y-2">
+                              <p className="font-bold mb-2">{message.content}</p>
+                              <div className="bg-white rounded-lg p-2">
+                                <img
+                                  src={message.metadata.imageUrl}
+                                  alt={message.metadata.title}
+                                  className="max-w-full h-auto rounded-lg"
+                                />
+                                {message.metadata.microLearningPoints && (
+                                  <div className="mt-2 text-sm">
+                                    <p className="font-bold mb-1">النقاط التعليمية:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                      {message.metadata.microLearningPoints.map((point: string, idx: number) => (
+                                        <li key={idx}>{point}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            message.content
+                          )}
                         </div>
                       </div>
                     </motion.div>
