@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,10 +54,74 @@ type MonthlyStatistics = {
    Component
 ========================= */
 
+type ReportStatus = "draft" | "submitted" | "approved" | "rejected";
+
+interface ReportInfo {
+  status: ReportStatus;
+  rejection_reason: string | null;
+  approved_at: string | null;
+}
+
 export default function StatisticsPage() {
   const { user, profile, loading } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(arabicMonths[0]);
   const [currentYear] = useState(new Date().getFullYear());
+  const [reportInfo, setReportInfo] = useState<ReportInfo | null>(null);
+  const [loadingReport, setLoadingReport] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load existing report status
+  useEffect(() => {
+    const loadReportStatus = async () => {
+      if (!user || !profile || !profile.health_center_name) {
+        setLoadingReport(false);
+        return;
+      }
+
+      try {
+        const monthIndex = arabicMonths.indexOf(selectedMonth);
+        const monthNumber = monthIndex >= 0 ? String(monthIndex + 1).padStart(2, "0") : String(new Date().getMonth() + 1).padStart(2, "0");
+
+        const { data, error } = await supabase
+          .from("monthly_statistics")
+          .select("status, rejection_reason, approved_at")
+          .eq("health_center_name", profile.health_center_name)
+          .eq("month", monthNumber)
+          .eq("year", currentYear)
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") { // PGRST116 = no rows returned
+          console.error("Error loading report status:", error);
+        } else if (data) {
+          setReportInfo({
+            status: data.status as ReportStatus,
+            rejection_reason: data.rejection_reason,
+            approved_at: data.approved_at,
+          });
+        } else {
+          setReportInfo({
+            status: "draft",
+            rejection_reason: null,
+            approved_at: null,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading report status:", error);
+        setReportInfo({
+          status: "draft",
+          rejection_reason: null,
+          approved_at: null,
+        });
+      } finally {
+        setLoadingReport(false);
+      }
+    };
+
+    if (!loading) {
+      loadReportStatus();
+    }
+  }, [user, profile, selectedMonth, currentYear, loading]);
 
   // Security guard: Block page if health_center_name is missing
   if (!loading && (!user || !profile || !profile.health_center_name || profile.health_center_name.trim() === "")) {
@@ -103,6 +167,13 @@ export default function StatisticsPage() {
       return;
     }
 
+    // Prevent editing if report is approved
+    if (reportInfo?.status === "approved") {
+      alert("لا يمكن تعديل التقرير بعد الموافقة عليه.");
+      e.target.value = ""; // Reset file input
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
@@ -139,13 +210,26 @@ export default function StatisticsPage() {
           .eq("user_id", user.id)
           .single();
 
+        // Determine status: if draft or rejected, allow editing; on submit, set to submitted
+        const newStatus = reportInfo?.status === "draft" || reportInfo?.status === "rejected" 
+          ? "submitted" 
+          : "submitted";
+
         if (existingRecord) {
-          // Update existing record
+          // Update existing record - only if draft or rejected
+          if (reportInfo?.status !== "draft" && reportInfo?.status !== "rejected") {
+            alert("لا يمكن تعديل التقرير في حالته الحالية.");
+            return;
+          }
+
           const { error } = await supabase
             .from("monthly_statistics")
             .update({
               statistics_data: statisticsData,
+              status: newStatus,
               updated_at: new Date().toISOString(),
+              // Clear rejection reason when resubmitting
+              rejection_reason: null,
             })
             .eq("id", existingRecord.id);
 
@@ -155,7 +239,7 @@ export default function StatisticsPage() {
             return;
           }
         } else {
-          // Insert new record
+          // Insert new record with status = "submitted"
           const { error } = await supabase
             .from("monthly_statistics")
             .insert({
@@ -164,6 +248,7 @@ export default function StatisticsPage() {
               month: monthNumber,
               year: currentYear,
               statistics_data: statisticsData,
+              status: "submitted",
             });
 
           if (error) {
@@ -173,7 +258,19 @@ export default function StatisticsPage() {
           }
         }
 
-        alert("تم حفظ البيانات بنجاح!");
+        // Reload report status
+        setReportInfo({
+          status: "submitted",
+          rejection_reason: null,
+          approved_at: null,
+        });
+
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        alert("تم إرسال التقرير بنجاح! سيتم مراجعته من قبل إدارة القطاع.");
       } catch (error) {
         console.error("Error processing file:", error);
         alert("حدث خطأ أثناء معالجة الملف. يرجى التأكد من صحة تنسيق الملف.");
@@ -187,6 +284,39 @@ export default function StatisticsPage() {
       <div className="p-6 max-w-4xl mx-auto dir-rtl" dir="rtl">
         <h1 className="text-3xl font-bold mb-8 text-center text-blue-800">إحصائيات المراكز الصحية</h1>
       
+      {/* Report Status Display */}
+      {!loadingReport && reportInfo && (
+        <div className={`mb-6 p-4 rounded-lg border-2 ${
+          reportInfo.status === "approved" 
+            ? "bg-green-50 border-green-300" 
+            : reportInfo.status === "rejected"
+            ? "bg-red-50 border-red-300"
+            : reportInfo.status === "submitted"
+            ? "bg-yellow-50 border-yellow-300"
+            : "bg-gray-50 border-gray-300"
+        }`}>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="font-bold text-lg">
+              {reportInfo.status === "approved" && "✓ تم اعتماد التقرير"}
+              {reportInfo.status === "rejected" && "✗ تم رفض التقرير"}
+              {reportInfo.status === "submitted" && "⏳ قيد المراجعة"}
+              {reportInfo.status === "draft" && "📝 مسودة"}
+            </span>
+          </div>
+          {reportInfo.status === "rejected" && reportInfo.rejection_reason && (
+            <div className="mt-2 p-3 bg-white rounded border border-red-200">
+              <p className="font-semibold text-red-800 mb-1">سبب الرفض:</p>
+              <p className="text-red-700">{reportInfo.rejection_reason}</p>
+            </div>
+          )}
+          {reportInfo.status === "approved" && reportInfo.approved_at && (
+            <p className="text-sm text-gray-600 mt-2">
+              تم الاعتماد في: {new Date(reportInfo.approved_at).toLocaleDateString("ar-IQ")}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* اسم المركز الصحي (قراءة فقط) */}
         <div>
@@ -206,7 +336,10 @@ export default function StatisticsPage() {
           <select 
             value={selectedMonth} 
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-blue-500"
+            disabled={reportInfo?.status === "approved"}
+            className={`w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-blue-500 ${
+              reportInfo?.status === "approved" ? "bg-gray-50 cursor-not-allowed" : ""
+            }`}
           >
             {arabicMonths.map((month) => (
               <option key={month} value={month}>{month}</option>
@@ -227,13 +360,29 @@ export default function StatisticsPage() {
       </div>
 
       {/* قسم رفع الملفات */}
-      <div className="bg-blue-50 p-6 rounded-lg border-2 border-dashed border-blue-300 text-center">
-        <label className="block mb-4 text-blue-700 font-bold">ارفع ملف الإحصائيات (Excel)</label>
+      <div className={`p-6 rounded-lg border-2 border-dashed text-center ${
+        reportInfo?.status === "approved" 
+          ? "bg-gray-50 border-gray-300 opacity-60" 
+          : "bg-blue-50 border-blue-300"
+      }`}>
+        <label className={`block mb-4 font-bold ${
+          reportInfo?.status === "approved" ? "text-gray-500" : "text-blue-700"
+        }`}>
+          {reportInfo?.status === "approved" 
+            ? "تم اعتماد التقرير - لا يمكن التعديل" 
+            : "ارفع ملف الإحصائيات (Excel)"}
+        </label>
         <input 
+          ref={fileInputRef}
           type="file" 
           accept=".xlsx, .xls" 
           onChange={handleFileUpload}
-          className="mx-auto block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+          disabled={reportInfo?.status === "approved"}
+          className={`mx-auto block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold ${
+            reportInfo?.status === "approved"
+              ? "file:bg-gray-400 file:text-white cursor-not-allowed opacity-50"
+              : "file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+          }`}
         />
       </div>
 

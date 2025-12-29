@@ -68,6 +68,10 @@ CREATE TABLE IF NOT EXISTS monthly_statistics (
   month TEXT NOT NULL,
   year INTEGER NOT NULL,
   statistics_data JSONB NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('draft', 'submitted', 'approved', 'rejected')) DEFAULT 'draft',
+  approved_by UUID REFERENCES auth.users(id),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  rejection_reason TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE (health_center_id, health_center_name, month, year)
@@ -80,6 +84,14 @@ ALTER TABLE monthly_statistics ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can insert own statistics"
   ON monthly_statistics FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can update their own statistics (only if draft or rejected)
+CREATE POLICY "Users can update own statistics"
+  ON monthly_statistics FOR UPDATE
+  USING (
+    auth.uid() = user_id 
+    AND (status = 'draft' OR status = 'rejected')
+  );
 
 -- Policy: Users can view their own statistics
 CREATE POLICY "Users can view own statistics"
@@ -157,6 +169,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_health_center_id ON profiles(health_cent
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 CREATE INDEX IF NOT EXISTS idx_monthly_statistics_health_center ON monthly_statistics(health_center_id, month, year);
 CREATE INDEX IF NOT EXISTS idx_monthly_statistics_user_id ON monthly_statistics(user_id);
+CREATE INDEX IF NOT EXISTS idx_monthly_statistics_status ON monthly_statistics(status);
+CREATE INDEX IF NOT EXISTS idx_monthly_statistics_approved_by ON monthly_statistics(approved_by);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
