@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Image as ImageIcon, Palette, Users, Zap, Download, Globe, QrCode } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Palette, Users, Zap, Download, Globe, QrCode, Search, Building2, BookOpen } from "lucide-react";
 import Image from "next/image";
 import { generateQRCodeDataUrl } from "@/lib/utils/qrCodeGenerator";
 import { toPng } from "html-to-image";
@@ -10,30 +10,34 @@ import { useAuth } from "@/contexts/AuthContext";
 import { logAudit } from "@/lib/audit";
 
 export default function PosterStudioPage() {
-  const { user } = useAuth();
-  const [campaignType, setCampaignType] = useState("");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [visualStyle, setVisualStyle] = useState("");
+  const { user, profile } = useAuth();
+  const [topic, setTopic] = useState("");
+  const [healthCenterName, setHealthCenterName] = useState("");
   const [language, setLanguage] = useState<"ar" | "tr">("ar");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [suggestedTitle, setSuggestedTitle] = useState<string>("");
+  const [microLearningPoints, setMicroLearningPoints] = useState<string[]>([]);
+  const [sources, setSources] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
-  // تعبئة الخيارات من URL parameters (من المعرض)
+  // تعبئة اسم المركز من Profile
+  useEffect(() => {
+    if (profile?.health_center_name) {
+      setHealthCenterName(profile.health_center_name);
+    }
+  }, [profile]);
+
+  // تعبئة الخيارات من URL parameters (من المعرض) - للتوافق مع النظام القديم
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const campaign = params.get("campaignType");
-      const audience = params.get("targetAudience");
-      const style = params.get("visualStyle");
+      const topicParam = params.get("topic");
       const lang = params.get("language");
 
-      if (campaign) setCampaignType(campaign);
-      if (audience) setTargetAudience(audience);
-      if (style) setVisualStyle(style);
+      if (topicParam) setTopic(topicParam);
       if (lang === "ar" || lang === "tr") setLanguage(lang);
     }
   }, []);
@@ -91,83 +95,76 @@ export default function PosterStudioPage() {
   const overlayStyle = getOverlayContrast(generatedImage);
 
   const handleGenerate = async () => {
-    if (!campaignType || !targetAudience || !visualStyle) {
-      alert("يرجى اختيار جميع الخيارات المطلوبة");
+    if (!topic || !topic.trim()) {
+      alert("يرجى إدخال الموضوع الصحي");
       return;
     }
 
     setIsGenerating(true);
     setGeneratedImage(null);
     setSuggestedTitle("");
+    setMicroLearningPoints([]);
+    setSources([]);
 
     try {
-      // استدعاء API لتوليد الصورة
-      const response = await fetch("/api/generate-poster", {
+      // استدعاء API الجديد للبحث والتوليد
+      const response = await fetch("/api/generate-infographic", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          campaignType,
-          targetAudience,
-          visualStyle,
+          topic: topic.trim(),
+          healthCenterName: healthCenterName || "",
           language,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("فشل توليد الصورة");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "فشل توليد الإنفوجرافيك");
       }
 
       const data = await response.json();
       setGeneratedImage(data.imageUrl);
       setSuggestedTitle(data.suggestedTitle || "");
+      setMicroLearningPoints(data.microLearningPoints || []);
+      setSources(data.sources || []);
 
       // تسجيل في Analytics
       if (user) {
         await logAudit(user.id, "pdf_generated", {
-          targetType: "poster",
+          targetType: "infographic",
           details: {
-            campaignType,
-            targetAudience,
-            visualStyle,
+            topic,
+            healthCenterName,
             language,
             suggestedTitle: data.suggestedTitle,
+            microLearningPoints: data.microLearningPoints,
           },
         });
 
         // تحديث إحصائيات البوسترات في قاعدة البيانات
         try {
-          // توليد البرومبت التفصيلي
-          const { generateDetailedPrompt } = await import("@/lib/ai/geminiImageGenerator");
-          const detailedPrompt = generateDetailedPrompt({
-            campaignType,
-            targetAudience,
-            visualStyle,
-            language,
-            suggestedTitle: data.suggestedTitle,
-          });
-
           await supabase.from("poster_analytics").insert({
             user_id: user.id,
-            campaign_type: campaignType,
-            target_audience: targetAudience,
-            visual_style: visualStyle,
+            campaign_type: "infographic",
+            target_audience: "general_public",
+            visual_style: "modern_infographic",
             language: language,
             suggested_title: data.suggestedTitle,
-            prompt: detailedPrompt,
+            prompt: data.prompt,
             image_url: data.imageUrl,
             download_count: 0,
             generated_at: new Date().toISOString(),
           });
         } catch (error) {
           console.error("Error saving analytics:", error);
-          // لا نوقف العملية إذا فشل حفظ Analytics
         }
       }
     } catch (error: any) {
-      console.error("Error generating poster:", error);
-      alert(`حدث خطأ أثناء توليد البوستر: ${error.message || "خطأ غير معروف"}`);
+      console.error("Error generating infographic:", error);
+      alert(`حدث خطأ أثناء توليد الإنفوجرافيك: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -193,17 +190,18 @@ export default function PosterStudioPage() {
 
         const link = document.createElement("a");
         link.href = dataUrl;
-        const fileName = `بوستر_${suggestedTitle || campaignType}_${Date.now()}.png`;
+        const fileName = `إنفوجرافيك_${suggestedTitle || topic}_${Date.now()}.png`;
         link.download = fileName;
         link.click();
 
         // Metadata للأرشفة
-        console.log("Poster exported:", {
+        console.log("Infographic exported:", {
           title: suggestedTitle,
-          campaignType,
-          targetAudience,
-          visualStyle,
+          topic,
+          healthCenterName,
           language,
+          microLearningPoints,
+          sources,
           metadata: "وحدة تعزيز الصحة - القطاع الأول",
         });
       } else {
@@ -230,7 +228,7 @@ export default function PosterStudioPage() {
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        pdf.save(`بوستر_${suggestedTitle || campaignType}_${Date.now()}.pdf`);
+        pdf.save(`إنفوجرافيك_${suggestedTitle || topic}_${Date.now()}.pdf`);
       }
     } catch (error) {
       console.error("Error exporting poster:", error);
@@ -273,71 +271,47 @@ export default function PosterStudioPage() {
               </div>
 
               <div className="space-y-6">
-                {/* نوع الحملة الصحية */}
+                {/* حقل الموضوع الصحي */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    نوع الحملة الصحية
+                    <Search className="w-4 h-4 text-emerald-600" />
+                    المناسبة الصحية أو الموضوع
                   </label>
-                  <select
-                    value={campaignType}
-                    onChange={(e) => setCampaignType(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 font-medium"
-                  >
-                    <option value="">اختر نوع الحملة</option>
-                    {campaignTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                  <textarea
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="مثال: اليوم العالمي لغسل اليدين، توعية حول لقاح الأطفال في كركوك، ظهور بوادر كوليرا..."
+                    rows={3}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 font-medium resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    اكتب الموضوع أو المناسبة الصحية، وسيقوم الذكاء الاصطناعي بالبحث في المصادر الرسمية
+                  </p>
                 </div>
 
-                {/* الجمهور المستهدف */}
+                {/* اسم المركز الصحي */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600" />
-                    الجمهور المستهدف
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    اسم المركز الصحي
                   </label>
-                  <select
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
+                  <input
+                    type="text"
+                    value={healthCenterName}
+                    onChange={(e) => setHealthCenterName(e.target.value)}
+                    placeholder="مثال: مركز صحي الحويجة"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 font-medium"
-                  >
-                    <option value="">اختر الجمهور المستهدف</option>
-                    {targetAudiences.map((audience) => (
-                      <option key={audience.value} value={audience.value}>
-                        {audience.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* الأسلوب الفني */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-amber-600" />
-                    الأسلوب الفني
-                  </label>
-                  <select
-                    value={visualStyle}
-                    onChange={(e) => setVisualStyle(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 font-medium"
-                  >
-                    <option value="">اختر الأسلوب الفني</option>
-                    {visualStyles.map((style) => (
-                      <option key={style.value} value={style.value}>
-                        {style.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    سيظهر اسم المركز في أسفل البوستر بشكل رسمي
+                  </p>
                 </div>
 
                 {/* اختيار اللغة */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <Globe className="w-4 h-4 text-purple-600" />
-                    لغة البوستر
+                    لغة الإنفوجرافيك
                   </label>
                   <select
                     value={language}
@@ -357,21 +331,39 @@ export default function PosterStudioPage() {
                   </div>
                 )}
 
+                {/* نقاط التعلم المصغر (يظهر بعد التوليد) */}
+                {microLearningPoints.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-xs font-bold text-blue-700 mb-2 flex items-center gap-2">
+                      <BookOpen className="w-3 h-3" />
+                      نقاط التعلم المصغر:
+                    </p>
+                    <ul className="space-y-2">
+                      {microLearningPoints.map((point, idx) => (
+                        <li key={idx} className="text-sm text-blue-900 font-medium flex items-start gap-2">
+                          <span className="text-blue-600 font-black">{idx + 1}.</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {/* زر التوليد */}
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !campaignType || !targetAudience || !visualStyle}
+                  disabled={isGenerating || !topic.trim()}
                   className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-black text-lg shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   {isGenerating ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>جاري التوليد...</span>
+                      <span>جاري البحث والتوليد...</span>
                     </>
                   ) : (
                     <>
                       <Zap className="w-5 h-5" />
-                      <span>توليد البوستر بالذكاء الاصطناعي</span>
+                      <span>توليد إنفوجرافيك ذكي</span>
                     </>
                   )}
                 </button>
@@ -447,17 +439,34 @@ export default function PosterStudioPage() {
                       : "bg-gradient-to-r from-gray-900/95 to-black/95"
                   }`}
                 >
-                  <div className="text-center">
+                  <div className="text-center space-y-2">
+                    {/* اسم المركز */}
+                    {healthCenterName && (
+                      <p className="text-white text-xs font-bold">
+                        {language === "tr"
+                          ? `Bu içerik ${healthCenterName} tarafından oluşturulmuştur`
+                          : `تم توليد هذا المحتوى التوعوي بواسطة: ${healthCenterName}`}
+                      </p>
+                    )}
+                    {/* الختم الرسمي */}
                     <p className="text-white text-sm font-bold">
                       {language === "tr"
                         ? "Kerkük Birinci Sektör Sağlık Müdürlüğü Onaylı Sağlık Mesajı"
                         : "رسالة صحية معتمدة من قطاع كركوك الأول"}
                     </p>
-                    <p className="text-white/80 text-xs mt-1">
+                    <p className="text-white/80 text-xs">
                       {language === "tr"
                         ? "Kerkük Sağlık Müdürlüğü - Sağlığı Geliştirme Birimi"
                         : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
                     </p>
+                    {/* المصادر */}
+                    {sources.length > 0 && (
+                      <p className="text-white/70 text-[10px] mt-2 border-t border-white/20 pt-2">
+                        {language === "tr"
+                          ? `Kaynak: ${sources.join(" / ")}`
+                          : `المصدر: ${sources.join(" / ")}`}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

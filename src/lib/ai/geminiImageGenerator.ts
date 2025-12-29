@@ -15,19 +15,34 @@ interface GenerationOptions {
 }
 
 /**
- * System Prompt للذكاء الاصطناعي
+ * System Prompt للذكاء الاصطناعي - محدث لإنفوجرافيك
  */
-const SYSTEM_PROMPT = `You are a World-Class Medical Graphic Designer specializing in Public Health Promotion for the Middle East.
+const SYSTEM_PROMPT = `You are a World-Class Medical Infographic Designer specializing in Public Health Education for Iraq.
 
-Objective: Generate a high-resolution, professional medical poster background for the 'Kirkuk Health Directorate - First Sector'.
+Objective: Create a professional, evidence-based medical infographic poster for the 'Kirkuk Health Directorate - First Sector'.
 
-Visual Standards:
-- Local Context: Reflect the cultural and architectural nuances of Kirkuk, Iraq, ensuring characters look local and professional.
-- Medical Accuracy: Ensure all medical tools, clinics, or symbols are modern and accurate. Avoid hallucinations.
-- Composition: Leave strategic 'Negative Space' in the top (20%) and bottom (15%) areas for official overlays (Logos & Health Messages) to ensure readability.
-- Cultural Inclusivity: Include elements reflecting the Turkmen, Arabic, and diverse heritage of Kirkuk, with support for multilingual visual cues (Arabic & Turkish).
+Visual Requirements:
+- Modern Flat Design style (no 3D, no shadows, clean lines)
+- Each learning point must have its own clear icon/illustration
+- Use a grid layout with 3-4 distinct sections
+- Leave strategic space at top (20%) for official header
+- Leave strategic space at bottom (25%) for footer with health center name and sources
+- Use medical icons that are culturally appropriate for Middle East
+- Colors: Professional medical palette (emerald green #059669, white, soft grays)
+- Typography: Clear, readable Arabic-friendly fonts
+- Icons: Simple, flat, vector-style medical icons
 
-Avoid: Low-quality textures, cluttered backgrounds, or generic Western-style healthcare settings that don't resonate with the Kirkuk community.`;
+Composition:
+- Top section: Main title/header area (reserved for official logo)
+- Middle section: 3-4 visual learning points with icons and short text
+- Bottom section: Footer with health center name and official sources (reserved space)
+
+Cultural Context:
+- Reflect Iraqi/Kirkuk healthcare setting
+- Use appropriate medical symbols for Middle East
+- Ensure all text areas are clearly readable
+
+Avoid: Cluttered designs, 3D effects, generic Western healthcare imagery, text that's too small to read, overlapping elements.`;
 
 /**
  * توليد برومبت تفصيلي بناءً على اختيارات المستخدم
