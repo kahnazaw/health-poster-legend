@@ -71,7 +71,7 @@ export default function PosterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-24 md:pb-12">
+    <main className="min-h-screen bg-slate-50 pb-24 md:pb-12 overflow-x-hidden">
       <PageHeader
         title="نظام إنشاء البوسترات التوعوية"
         subtitle="إنشاء بوسترات توعوية احترافية بسهولة"
@@ -101,9 +101,9 @@ export default function PosterPage() {
                 <React.Fragment key={step.number}>
                   <div className="flex flex-col items-center relative z-10 flex-1">
                     <div
-                      className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white font-bold text-base md:text-lg transition-all duration-300 shadow-lg ${
+                      className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white font-bold text-base md:text-lg transition-all duration-300 shadow-lg motion-safe:scale-100 ${
                         isCurrent
-                          ? "bg-emerald-600 scale-110 ring-4 ring-emerald-200 ring-offset-2"
+                          ? "bg-emerald-600 motion-safe:scale-110 ring-4 ring-emerald-200 ring-offset-2"
                           : isCompleted
                           ? "bg-emerald-500"
                           : "bg-gray-300"
@@ -150,7 +150,7 @@ export default function PosterPage() {
 
         {/* Enhanced Success Message */}
         {exportComplete && (
-          <div className="mb-6 md:mb-8 p-4 md:p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-xl flex items-center gap-4 shadow-lg animate-in slide-in-from-top-2">
+          <div className="mb-6 md:mb-8 p-4 md:p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-xl flex items-center gap-4 shadow-lg">
             <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -244,7 +244,7 @@ export default function PosterPage() {
 
             {currentStep === "preview" && selectedTopic && (
               <div className="bg-slate-200 p-6 md:p-8 rounded-2xl shadow-2xl border-4 border-slate-300">
-                <div className="bg-white rounded-xl shadow-2xl p-4 md:p-6" style={{ boxShadow: "0 20px 60px -12px rgba(0, 0, 0, 0.25)" }}>
+                <div className="bg-white rounded-xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.25)] p-4 md:p-6">
                   <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-200">
                     <h2 className="text-base md:text-lg font-bold text-gray-800">معاينة البوستر الرسمي</h2>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -276,7 +276,7 @@ export default function PosterPage() {
             {currentStep !== "select" && (
               <button
                 onClick={handleBack}
-                className="px-6 md:px-8 py-3 md:py-4 min-h-[48px] bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-400 focus:ring-4 focus:ring-gray-200 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-3 text-base md:text-lg"
+                className="px-6 md:px-8 py-3 md:py-4 min-h-[48px] bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-400 focus:ring-4 focus:ring-gray-200 motion-safe:active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-3 text-base md:text-lg"
               >
                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -295,7 +295,7 @@ export default function PosterPage() {
             {currentStep === "edit" && (
               <button
                 onClick={handleNext}
-                className="ml-auto px-6 md:px-8 py-3 md:py-4 min-h-[48px] bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-emerald-800 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-3 text-base md:text-lg"
+                className="ml-auto px-6 md:px-8 py-3 md:py-4 min-h-[48px] bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-emerald-800 focus:ring-4 focus:ring-emerald-200 motion-safe:active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-3 text-base md:text-lg"
               >
                 <span>معاينة</span>
                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -17,16 +17,7 @@ const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
     return (
       <div
         ref={ref}
-        className="bg-white mx-auto print-avoid-break"
-        style={{
-          width: "794px",
-          maxWidth: "100%",
-          minHeight: "1123px",
-          padding: "80px 60px",
-          position: "relative",
-          boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 20px rgba(0,0,0,0.15), 0 8px 40px rgba(0,0,0,0.1)",
-          border: "1px solid #e5e7eb",
-        }}
+        className="bg-white mx-auto print-avoid-break w-[794px] max-w-full min-h-[1123px] py-20 px-[60px] relative border border-gray-200 shadow-[0_0_0_1px_rgba(0,0,0,0.1),0_4px_20px_rgba(0,0,0,0.15),0_8px_40px_rgba(0,0,0,0.1)]"
       >
         {/* Official Header - Enhanced Institutional Look */}
         <div className="mb-12 pb-8 border-b-4 border-emerald-600">
@@ -54,38 +45,22 @@ const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         </div>
 
         {/* Main Content - Enhanced Typography */}
-        <div className="text-center mb-12" style={{ minHeight: "400px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div className="text-7xl mb-8" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>
+        <div className="text-center mb-12 min-h-[400px] flex flex-col justify-center">
+          <div className="text-7xl mb-8 drop-shadow-sm">
             {topic.icon}
           </div>
-          <h1
-            className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-8 leading-tight"
-            style={{ 
-              lineHeight: "1.2",
-              textShadow: "0 2px 4px rgba(0,0,0,0.05)",
-              letterSpacing: "-0.02em"
-            }}
-          >
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-8 leading-tight tracking-tight drop-shadow-sm">
             {title}
           </h1>
           <div className="max-w-2xl mx-auto">
-            <p
-              className="text-2xl md:text-3xl text-gray-800 leading-relaxed font-medium"
-              style={{ 
-                lineHeight: "1.75",
-                letterSpacing: "0.01em"
-              }}
-            >
+            <p className="text-2xl md:text-3xl text-gray-800 leading-relaxed font-medium tracking-wide">
               {message}
             </p>
           </div>
         </div>
 
         {/* Footer - Enhanced Official Look */}
-        <div
-          className="absolute bottom-0 left-0 right-0 text-center py-8 border-t-4 border-gray-300 bg-gray-50"
-          style={{ paddingLeft: "60px", paddingRight: "60px" }}
-        >
+        <div className="absolute bottom-0 left-0 right-0 text-center py-8 border-t-4 border-gray-300 bg-gray-50 px-[60px]">
           <div className="mb-3">
             <p className="text-sm font-bold text-gray-800 mb-1">
               دائرة صحة كركوك – قطاع كركوك الأول – وحدة تعزيز الصحة

@@ -120,7 +120,7 @@ export default function PosterExportActions({
       <button
         onClick={handleExportPNG}
         disabled={exporting !== null}
-        className="flex-1 px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
+        className="flex-1 px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 motion-safe:active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
       >
         {exporting === "png" ? (
           <>
@@ -142,7 +142,7 @@ export default function PosterExportActions({
       <button
         onClick={handleExportPDF}
         disabled={exporting !== null}
-        className="flex-1 px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
+        className="flex-1 px-4 md:px-6 py-2.5 md:py-3 min-h-[44px] bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 motion-safe:active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
       >
         {exporting === "pdf" ? (
           <>
