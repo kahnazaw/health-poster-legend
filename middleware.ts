@@ -1,3 +1,10 @@
+// =====================================================
+// MIDDLEWARE DISABLED - Direct Access Bypass Enabled
+// =====================================================
+// تم تعطيل middleware تماماً للسماح بالوصول المباشر
+// لجميع الصفحات بدون إعادة توجيه تلقائي
+
+/*
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -32,15 +39,24 @@ export function middleware(request: NextRequest) {
 // تحديد المسارات التي يجب تطبيق middleware عليها
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     */
+    // Match all request paths except for the ones starting with:
+    // - api (API routes)
+    // - _next/static (static files)
+    // - _next/image (image optimization files)
+    // - favicon.ico (favicon file)
+    // - public files (public folder)
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
+};
+*/
+
+// Middleware معطل - السماح بجميع الطلبات
+export function middleware(request: any) {
+  // لا شيء - السماح بجميع الطلبات
+  return;
+}
+
+export const config = {
+  matcher: [],
 };
 
