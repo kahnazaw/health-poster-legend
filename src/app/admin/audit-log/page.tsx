@@ -218,9 +218,9 @@ export default function AdminAuditLogPage() {
                 />
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-1">
-                دائرة صحة كركوك
+                قطاع كركوك الأول
               </h2>
-              <p className="text-base text-gray-700">قطاع كركوك الأول - وحدة تعزيز الصحة</p>
+              <p className="text-base text-gray-700">المنصة الإدارية</p>
             </div>
           </div>
         </div>

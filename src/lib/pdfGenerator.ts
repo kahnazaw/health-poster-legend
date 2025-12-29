@@ -42,11 +42,11 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
   yPos += 10;
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  addText("دائرة صحة كركوك", pageWidth - margin, yPos);
+  addText("قطاع كركوك الأول", pageWidth - margin, yPos);
   yPos += 8;
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
-  addText("قطاع كركوك الأول", pageWidth - margin, yPos);
+  addText("المنصة الإدارية", pageWidth - margin, yPos);
   yPos += 6;
   doc.setFontSize(12);
   addText("وحدة تعزيز الصحة", pageWidth - margin, yPos);
@@ -58,13 +58,10 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
   addText("تقرير الإحصائيات الشهرية", pageWidth - margin, yPos);
   yPos += 10;
 
-  // Report Details
+  // Report Details (health center name is optional)
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  if (data.healthCenterName) {
-    addText(`اسم المركز الصحي: ${data.healthCenterName}`, pageWidth - margin, yPos);
-    yPos += 7;
-  }
+  // Note: health_center_name field has been removed from requirements
   addText(`الشهر: ${data.month}`, pageWidth - margin, yPos);
   yPos += 7;
   addText(`السنة: ${data.year}`, pageWidth - margin, yPos);

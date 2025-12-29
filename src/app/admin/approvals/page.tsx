@@ -153,10 +153,9 @@ export default function AdminApprovalsPage() {
                 />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                دائرة صحة كركوك
+                قطاع كركوك الأول
               </h2>
-              <p className="text-lg text-gray-700 mb-1">قطاع كركوك الأول</p>
-              <p className="text-base text-gray-600 mb-4">وحدة تعزيز الصحة</p>
+              <p className="text-lg text-gray-700 mb-1">المنصة الإدارية</p>
               <h1 className="text-xl font-semibold text-emerald-700 border-t border-gray-200 pt-4">
                 لوحة الموافقة على المستخدمين
               </h1>

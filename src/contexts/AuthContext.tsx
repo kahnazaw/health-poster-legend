@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 export interface Profile {
   full_name: string;
-  health_center_name: string; // Optional - can be empty string
+  health_center_name?: string; // Optional field - removed from requirements
   role: "admin" | "center_user";
   is_approved: boolean;
 }
@@ -38,10 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         // Fallback to user metadata if profile doesn't exist yet
         const metadata = currentUser.user_metadata;
-        if (metadata?.full_name && metadata?.health_center_name) {
+        if (metadata?.full_name) {
           setProfile({
             full_name: String(metadata.full_name),
-            health_center_name: String(metadata.health_center_name),
+            health_center_name: metadata.health_center_name ? String(metadata.health_center_name) : undefined,
             role: metadata.role === "admin" ? "admin" : "center_user",
             is_approved: Boolean(metadata.is_approved),
           });
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (data) {
         setProfile({
           full_name: data.full_name || "",
-          health_center_name: data.health_center_name || "",
+          health_center_name: data.health_center_name || undefined,
           role: (data.role === "admin" ? "admin" : "center_user") as "admin" | "center_user",
           is_approved: Boolean(data.is_approved),
         });

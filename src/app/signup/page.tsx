@@ -83,7 +83,7 @@ export default function SignupPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">إنشاء حساب جديد</h1>
-            <p className="text-gray-600">دائرة صحة كركوك - قطاع كركوك الأول</p>
+            <p className="text-gray-600">قطاع كركوك الأول - المنصة الإدارية</p>
           </div>
 
           {success && (

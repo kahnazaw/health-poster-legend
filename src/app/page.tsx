@@ -55,7 +55,7 @@ export default function AppleLanding() {
       <section className="text-center py-20">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/40 backdrop-blur-md border border-white/40 text-[11px] font-black text-emerald-700 mb-12 shadow-sm uppercase tracking-widest">
-            <Sparkles size={14} /> قطاع كركوك الأول - التحول الرقمي
+            <Sparkles size={14} /> قطاع كركوك الأول - المنصة الإدارية
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tight leading-[1.05] mb-10 font-tajawal">
             نبض الصحة <br /> في <span className="text-[#059669]">كركوك.</span>

@@ -12,8 +12,8 @@ const vazirmatn = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazirmatn" 
 const tajawal = Tajawal({ subsets: ["arabic"], weight: ['700', '900'], variable: "--font-tajawal" });
 
 export const metadata: Metadata = {
-  title: "منصة تعزيز الصحة | كركوك",
-  description: "المنصة الذكية لقطاع كركوك الأول",
+  title: "قطاع كركوك الأول - المنصة الإدارية",
+  description: "قطاع كركوك الأول - المنصة الإدارية",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

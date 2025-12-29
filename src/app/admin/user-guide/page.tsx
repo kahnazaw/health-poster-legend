@@ -43,11 +43,11 @@ export default function UserGuidePage() {
       // Header
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      addText("دائرة صحة كركوك", pageWidth - margin, yPos);
+      addText("قطاع كركوك الأول", pageWidth - margin, yPos);
       yPos += 8;
       doc.setFontSize(14);
       doc.setFont("helvetica", "normal");
-      addText("قطاع كركوك الأول - وحدة تعزيز الصحة", pageWidth - margin, yPos);
+      addText("المنصة الإدارية", pageWidth - margin, yPos);
       yPos += 10;
 
       // Introduction
@@ -142,7 +142,7 @@ export default function UserGuidePage() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "italic");
       addText(`تم إنشاء هذا الدليل في: ${new Date().toLocaleDateString("ar-IQ")}`, pageWidth - margin, pageHeight - 10);
-      addText("دائرة صحة كركوك - جميع الحقوق محفوظة", margin, pageHeight - 10);
+      addText("قطاع كركوك الأول - المنصة الإدارية - جميع الحقوق محفوظة", margin, pageHeight - 10);
 
       // Save PDF
       doc.save(`دليل_استخدام_النظام_${new Date().getTime()}.pdf`);
@@ -218,7 +218,7 @@ export default function UserGuidePage() {
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-              <p>دائرة صحة كركوك - قطاع كركوك الأول - وحدة تعزيز الصحة</p>
+              <p>قطاع كركوك الأول - المنصة الإدارية</p>
               <p className="mt-2">© {new Date().getFullYear()} جميع الحقوق محفوظة</p>
             </div>
           </div>

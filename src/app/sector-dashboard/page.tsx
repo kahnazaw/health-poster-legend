@@ -320,15 +320,15 @@ export default function SectorDashboardPage() {
     
     // Insert header rows at the beginning
     XLSX.utils.sheet_add_aoa(worksheet, [
-      ["دائرة صحة كركوك"],
-      ["قطاع كركوك الأول – وحدة تعزيز الصحة"],
+      ["قطاع كركوك الأول"],
+      ["المنصة الإدارية"],
       [`لوحة متابعة إحصائيات المراكز الصحية - ${monthName} ${selectedYear}`],
       [""], // Empty row
     ], { origin: "A1" });
 
     // Set column widths
     const columnWidths = [
-      { wch: 30 }, // اسم المركز الصحي
+      { wch: 30 }, // اسم المستخدم
       { wch: 15 }, // حالة الإرسال
       { wch: 25 }, // تاريخ ووقت الإرسال
       { wch: 20 }, // مجموع الجلسات الفردية
@@ -884,7 +884,7 @@ export default function SectorDashboardPage() {
             للاستخدام الرسمي فقط
           </p>
           <p className="text-xs text-gray-400">
-            © {currentYear} دائرة صحة كركوك
+            © {currentYear} قطاع كركوك الأول - المنصة الإدارية
           </p>
         </div>
         </footer>

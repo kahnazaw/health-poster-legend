@@ -54,8 +54,8 @@ export default function PendingApprovalPage() {
                 className="h-20 w-auto object-contain"
               />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">دائرة صحة كركوك</h1>
-            <p className="text-gray-600 mb-6">قطاع كركوك الأول</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">قطاع كركوك الأول</h1>
+            <p className="text-gray-600 mb-6">المنصة الإدارية</p>
           </div>
 
           <div className="text-center space-y-6">

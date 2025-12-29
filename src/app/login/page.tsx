@@ -5,7 +5,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h1 className="text-3xl font-extrabold text-blue-900 mb-2">قطاع كركوك الأول</h1>
+        <h1 className="text-3xl font-extrabold text-blue-900 mb-2">قطاع كركوك الأول - المنصة الإدارية</h1>
         <h2 className="text-xl text-gray-600">تسجيل الدخول للنظام</h2>
       </div>
 

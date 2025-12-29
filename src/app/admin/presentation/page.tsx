@@ -216,7 +216,7 @@ export default function PresentationPage() {
     // Footer
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
-    addText("دائرة صحة كركوك - قطاع كركوك الأول - وحدة تعزيز الصحة", pageWidth - margin, pageHeight - 10);
+    addText("قطاع كركوك الأول - المنصة الإدارية", pageWidth - margin, pageHeight - 10);
     addText(`صفحة ${doc.internal.pages.length}`, margin, pageHeight - 10);
 
     doc.save(`عرض_تقديمي_${selectedYear}_${new Date().getTime()}.pdf`);
