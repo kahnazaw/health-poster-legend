@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, Image as ImageIcon, Palette, Users, Zap } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Sparkles, Image as ImageIcon, Palette, Users, Zap, Download, Globe, QrCode } from "lucide-react";
 import Image from "next/image";
+import { generateQRCodeDataUrl } from "@/lib/utils/qrCodeGenerator";
+import { toPng } from "html-to-image";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAudit } from "@/lib/audit";
 
 export default function PosterStudioPage() {
+  const { user } = useAuth();
   const [campaignType, setCampaignType] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [visualStyle, setVisualStyle] = useState("");
+  const [language, setLanguage] = useState<"ar" | "tr">("ar");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [suggestedTitle, setSuggestedTitle] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const campaignTypes = [
     { value: "vaccination", label: "حملة تلقيح" },
@@ -37,6 +48,32 @@ export default function PosterStudioPage() {
     { value: "vibrant", label: "ملون وجذاب" },
   ];
 
+  // توليد QR Code عند تحميل الصفحة
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const qrUrl = await generateQRCodeDataUrl();
+        setQrCodeUrl(qrUrl);
+      } catch (error) {
+        console.error("Error generating QR code:", error);
+      }
+    };
+    generateQR();
+  }, []);
+
+  // Auto-Contrast: حساب لون Overlay بناءً على لون الخلفية
+  const getOverlayContrast = (imageUrl: string | null): "light" | "dark" => {
+    // في الإنتاج الحقيقي، يمكن تحليل لون الصورة
+    // حالياً نستخدم منطق بسيط
+    if (!imageUrl) return "dark";
+    
+    // إذا كانت الصورة فاتحة، استخدم Overlay داكن والعكس
+    // يمكن تطوير هذا لتحليل فعلي للصورة
+    return "dark"; // افتراضي
+  };
+
+  const overlayStyle = getOverlayContrast(generatedImage);
+
   const handleGenerate = async () => {
     if (!campaignType || !targetAudience || !visualStyle) {
       alert("يرجى اختيار جميع الخيارات المطلوبة");
@@ -44,11 +81,133 @@ export default function PosterStudioPage() {
     }
 
     setIsGenerating(true);
-    // TODO: إضافة منطق توليد الصورة بالذكاء الاصطناعي
-    setTimeout(() => {
-      setGeneratedImage("/logo.png"); // صورة مؤقتة للاختبار
+    setGeneratedImage(null);
+    setSuggestedTitle("");
+
+    try {
+      // استدعاء API لتوليد الصورة
+      const response = await fetch("/api/generate-poster", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          campaignType,
+          targetAudience,
+          visualStyle,
+          language,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("فشل توليد الصورة");
+      }
+
+      const data = await response.json();
+      setGeneratedImage(data.imageUrl);
+      setSuggestedTitle(data.suggestedTitle || "");
+
+      // تسجيل في Analytics
+      if (user) {
+        await logAudit(user.id, "pdf_generated", {
+          targetType: "poster",
+          details: {
+            campaignType,
+            targetAudience,
+            visualStyle,
+            language,
+            suggestedTitle: data.suggestedTitle,
+          },
+        });
+
+        // تحديث إحصائيات البوسترات في قاعدة البيانات
+        try {
+          await supabase.from("poster_analytics").insert({
+            user_id: user.id,
+            campaign_type: campaignType,
+            target_audience: targetAudience,
+            visual_style: visualStyle,
+            language: language,
+            generated_at: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error("Error saving analytics:", error);
+          // لا نوقف العملية إذا فشل حفظ Analytics
+        }
+      }
+    } catch (error: any) {
+      console.error("Error generating poster:", error);
+      alert(`حدث خطأ أثناء توليد البوستر: ${error.message || "خطأ غير معروف"}`);
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
+  };
+
+  const handleExport = async (format: "png" | "pdf") => {
+    if (!posterRef.current) {
+      alert("لا يوجد بوستر للتصدير");
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      if (format === "png") {
+        // Ultra-Res Export مع pixelRatio: 3
+        const dataUrl = await toPng(posterRef.current, {
+          pixelRatio: 3, // دقة عالية للطباعة
+          quality: 1,
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+        });
+
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        const fileName = `بوستر_${suggestedTitle || campaignType}_${Date.now()}.png`;
+        link.download = fileName;
+        link.click();
+
+        // Metadata للأرشفة
+        console.log("Poster exported:", {
+          title: suggestedTitle,
+          campaignType,
+          targetAudience,
+          visualStyle,
+          language,
+          metadata: "وحدة تعزيز الصحة - القطاع الأول",
+        });
+      } else {
+        // PDF Export
+        const { default: html2canvas } = await import("html2canvas");
+        const { default: jsPDF } = await import("jspdf");
+
+        const canvas = await html2canvas(posterRef.current, {
+          useCORS: true,
+          background: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/png", 1.0);
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        pdf.save(`بوستر_${suggestedTitle || campaignType}_${Date.now()}.pdf`);
+      }
+    } catch (error) {
+      console.error("Error exporting poster:", error);
+      alert("حدث خطأ أثناء تصدير البوستر");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -144,6 +303,30 @@ export default function PosterStudioPage() {
                   </select>
                 </div>
 
+                {/* اختيار اللغة */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-purple-600" />
+                    لغة البوستر
+                  </label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as "ar" | "tr")}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 font-medium"
+                  >
+                    <option value="ar">العربية</option>
+                    <option value="tr">التركمانية / التركية</option>
+                  </select>
+                </div>
+
+                {/* العنوان المقترح (يظهر بعد التوليد) */}
+                {suggestedTitle && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                    <p className="text-xs font-bold text-emerald-700 mb-2">عنوان مقترح:</p>
+                    <p className="text-sm font-black text-emerald-900">{suggestedTitle}</p>
+                  </div>
+                )}
+
                 {/* زر التوليد */}
                 <button
                   onClick={handleGenerate}
@@ -177,15 +360,17 @@ export default function PosterStudioPage() {
               </div>
 
               {/* منطقة المعاينة مع الطبقات المتراكبة */}
-              <div className="relative w-full aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+              <div
+                ref={posterRef}
+                className="relative w-full aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200"
+              >
                 {/* الطبقة الخلفية - صورة الذكاء الاصطناعي */}
                 <div className="absolute inset-0">
                   {generatedImage ? (
-                    <Image
+                    <img
                       src={generatedImage}
                       alt="Generated Poster"
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -197,29 +382,51 @@ export default function PosterStudioPage() {
                   )}
                 </div>
 
-                {/* الطبقة العلوية - شريط الشعار */}
-                <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-emerald-600/90 to-emerald-700/90 backdrop-blur-sm p-4 z-10">
+                {/* الطبقة العلوية - شريط الشعار مع Auto-Contrast */}
+                <div
+                  className={`absolute top-0 left-0 right-0 backdrop-blur-sm p-4 z-10 transition-all duration-300 ${
+                    overlayStyle === "dark"
+                      ? "bg-gradient-to-r from-emerald-600/95 to-emerald-700/95"
+                      : "bg-gradient-to-r from-white/95 to-white/95"
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 bg-white rounded-lg p-1.5">
+                      <div className="relative w-10 h-10 bg-white rounded-lg p-1.5 shadow-sm">
                         <Image src="/logo.png" alt="Logo" fill className="object-contain" />
                       </div>
-                      <div className="text-white">
+                      <div className={overlayStyle === "dark" ? "text-white" : "text-gray-900"}>
                         <p className="text-sm font-black">دائرة صحة كركوك</p>
                         <p className="text-xs font-bold opacity-90">القطاع الأول</p>
                       </div>
                     </div>
+                    {/* QR Code في الزاوية */}
+                    {qrCodeUrl && (
+                      <div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm">
+                        <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* الطبقة السفلية - التذييل الرسمي */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm p-4 z-10">
+                {/* الطبقة السفلية - التذييل الرسمي مع Auto-Contrast */}
+                <div
+                  className={`absolute bottom-0 left-0 right-0 backdrop-blur-sm p-4 z-10 transition-all duration-300 ${
+                    overlayStyle === "dark"
+                      ? "bg-gradient-to-r from-slate-800/95 to-slate-900/95"
+                      : "bg-gradient-to-r from-gray-900/95 to-black/95"
+                  }`}
+                >
                   <div className="text-center">
                     <p className="text-white text-sm font-bold">
-                      رسالة صحية معتمدة من قطاع كركوك الأول
+                      {language === "tr"
+                        ? "Kerkük Birinci Sektör Sağlık Müdürlüğü Onaylı Sağlık Mesajı"
+                        : "رسالة صحية معتمدة من قطاع كركوك الأول"}
                     </p>
                     <p className="text-white/80 text-xs mt-1">
-                      دائرة صحة كركوك - وحدة تعزيز الصحة
+                      {language === "tr"
+                        ? "Kerkük Sağlık Müdürlüğü - Sağlığı Geliştirme Birimi"
+                        : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
                     </p>
                   </div>
                 </div>
@@ -227,20 +434,68 @@ export default function PosterStudioPage() {
 
               {/* أزرار الإجراءات */}
               {generatedImage && (
-                <div className="mt-4 flex gap-3">
-                  <button className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors">
-                    تحميل البوستر
-                  </button>
-                  <button className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-colors">
+                <div className="mt-4 space-y-3">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleExport("png")}
+                      disabled={isExporting}
+                      className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isExporting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>جاري التصدير...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span>تحميل PNG (دقة عالية)</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleExport("pdf")}
+                      disabled={isExporting}
+                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isExporting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>جاري التصدير...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span>تحميل PDF</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleGenerate}
+                    className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                  >
                     إعادة التوليد
                   </button>
                 </div>
               )}
             </div>
+
+            {/* معلومات QR Code */}
+            {qrCodeUrl && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <QrCode className="w-4 h-4 text-blue-600" />
+                  <p className="text-xs font-bold text-blue-700">QR Code تلقائي</p>
+                </div>
+                <p className="text-xs text-blue-600">
+                  سيتم تضمين QR Code في البوستر يوجه المستخدمين إلى الموقع الرسمي
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-
