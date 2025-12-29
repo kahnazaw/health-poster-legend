@@ -29,14 +29,21 @@ Topic: ${topic}
 
 Health Point to Illustrate: "${point}"
 
-Visual Requirements:
+Visual Requirements - CONSISTENT ART STYLE:
 - Style: Modern Flat Illustration (Flat Design, no 3D, no shadows, clean vector-style lines)
+- Art Style Consistency: ALL 3 illustrations must use the EXACT SAME artistic style:
+  * Same line thickness (2-3px)
+  * Same color palette (see below)
+  * Same character design style (if humans are shown)
+  * Same shading technique (flat, no gradients)
+  * Same level of detail
+  * Same cartoon style (friendly, approachable, professional)
 - Type: Cartoon illustration that clearly represents the health message
-- Colors: Use a vibrant, medical color palette:
+- Colors: Use a CONSISTENT vibrant, medical color palette across ALL illustrations:
   * Primary: Emerald green (#059669) for medical/health elements
   * Secondary: Soft blue (#3b82f6) for calm/trust elements
   * Accent: Warm orange (#f59e0b) for alerts/important elements
-  * Background: Light, clean background (white or very light gray)
+  * Background: Light, clean background (white or very light gray #f9fafb)
 - Composition: 
   * Single focal illustration in the center
   * Clear, simple, and easy to understand at a glance
@@ -44,6 +51,7 @@ Visual Requirements:
   * Leave 10% space on left and right sides
 - Cultural Context: Reflect Iraqi/Kirkuk healthcare setting
 - Medical Accuracy: Ensure all medical elements are accurate and appropriate
+- Consistency Rule: When generating multiple illustrations for the same topic, they must look like they were drawn by the SAME artist with the SAME style guide
 
 Illustration Guidelines:
 - If the point is about vaccination: Show a friendly cartoon of a child receiving a vaccine, with a caring doctor/nurse

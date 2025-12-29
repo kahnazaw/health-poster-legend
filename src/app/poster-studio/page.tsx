@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAudit } from "@/lib/audit";
 import { generateSeasonalSuggestions, getOfficialCategories, type TopicSuggestion } from "@/lib/ai/topicSuggestions";
+import { factCheckHealthPoints, type FactCheckResult } from "@/lib/ai/factChecker";
+import { generateMetadataBarcode } from "@/lib/utils/barcodeGenerator";
 
 export default function PosterStudioPage() {
   const { user, profile } = useAuth();
@@ -27,6 +29,9 @@ export default function PosterStudioPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [factCheckResult, setFactCheckResult] = useState<any>(null);
+  const [isFactChecking, setIsFactChecking] = useState(false);
+  const [verifiedPoints, setVerifiedPoints] = useState<string[]>([]);
   const posterRef = useRef<HTMLDivElement>(null);
 
   // تعبئة اسم المركز من Profile
@@ -282,6 +287,14 @@ export default function PosterStudioPage() {
 
         // إضافة الصورة لتغطي كامل الصفحة مع الحفاظ على الأبعاد
         pdf.addImage(imgData, "JPEG", xOffset, yOffset, imgWidth, imgHeight);
+
+        // إضافة باركود الميتاداتا في الحاشية
+        generateMetadataBarcode(pdf, {
+          generatedAt: new Date().toISOString(),
+          healthCenterName: healthCenterName || "قطاع كركوك الأول",
+          topic: suggestedTitle || topic || "إنفوجرافيك",
+          userId: user?.id || undefined,
+        });
 
         // إنشاء اسم ملف احترافي
         const sanitizeFileName = (text: string) => {
@@ -546,6 +559,86 @@ export default function PosterStudioPage() {
                     </>
                   )}
                 </button>
+
+                {/* زر تدقيق المصادر - يظهر بعد التوليد */}
+                {illustrations.length > 0 && microLearningPoints.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      setIsFactChecking(true);
+                      try {
+                        const result = await factCheckHealthPoints(
+                          microLearningPoints,
+                          topic,
+                          sources
+                        );
+                        setFactCheckResult(result);
+                        if (result.verifiedPoints.length > 0) {
+                          setVerifiedPoints(result.verifiedPoints);
+                          setMicroLearningPoints(result.verifiedPoints);
+                        }
+                        if (result.isValid) {
+                          alert("✅ تم التحقق من المصادر بنجاح!\n\n" + 
+                            (result.warnings.length > 0 ? "تحذيرات: " + result.warnings.join(", ") : "جميع المعلومات دقيقة علمياً"));
+                        } else {
+                          alert("⚠️ تم اكتشاف بعض التنبيهات. يرجى مراجعة النقاط المحدثة.");
+                        }
+                      } catch (error: any) {
+                        alert("حدث خطأ أثناء التدقيق: " + error.message);
+                      } finally {
+                        setIsFactChecking(false);
+                      }
+                    }}
+                    disabled={isFactChecking}
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isFactChecking ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>جاري التدقيق العلمي...</span>
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="w-4 h-4" />
+                        <span>تدقيق المصادر</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* نتائج التدقيق */}
+                {factCheckResult && (
+                  <div className={`p-4 rounded-xl border-2 ${
+                    factCheckResult.isValid 
+                      ? "bg-green-50 border-green-200" 
+                      : "bg-yellow-50 border-yellow-200"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {factCheckResult.isValid ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <BookOpen className="w-5 h-5 text-yellow-600" />
+                      )}
+                      <p className={`text-sm font-bold ${
+                        factCheckResult.isValid ? "text-green-700" : "text-yellow-700"
+                      }`}>
+                        {factCheckResult.isValid ? "تم التحقق من المصادر" : "تحذيرات علمية"}
+                      </p>
+                    </div>
+                    {factCheckResult.warnings.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs font-bold text-yellow-700 mb-1">تحذيرات:</p>
+                        <ul className="text-xs text-yellow-600 list-disc list-inside">
+                          {factCheckResult.warnings.map((warning: string, idx: number) => (
+                            <li key={idx}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-600 mt-2">
+                      مستوى الثقة: {factCheckResult.confidence === "high" ? "عالي" : factCheckResult.confidence === "medium" ? "متوسط" : "منخفض"}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
