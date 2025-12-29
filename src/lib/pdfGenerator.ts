@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { logAudit } from "./audit";
 
 interface ReportData {
   healthCenterName: string;
@@ -7,6 +8,8 @@ interface ReportData {
   statisticsData: any;
   approvedAt: string | null;
   approvedByName: string | null;
+  userId?: string | null;
+  reportId?: string | null;
 }
 
 export async function generateApprovedReportPDF(data: ReportData): Promise<void> {
@@ -166,5 +169,18 @@ export async function generateApprovedReportPDF(data: ReportData): Promise<void>
   // Save PDF
   const fileName = `تقرير_${data.healthCenterName}_${data.month}_${data.year}.pdf`;
   doc.save(fileName);
+
+  // Log audit event for PDF generation
+  if (data.userId && data.reportId) {
+    await logAudit(data.userId, "pdf_generated", {
+      targetType: "monthly_statistics",
+      targetId: data.reportId,
+      details: {
+        month: data.month,
+        year: data.year,
+        health_center_name: data.healthCenterName,
+      },
+    });
+  }
 }
 

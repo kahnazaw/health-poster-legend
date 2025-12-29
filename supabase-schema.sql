@@ -147,7 +147,10 @@ CREATE TRIGGER on_auth_user_created
 CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  action TEXT NOT NULL CHECK (action IN ('signup', 'approved', 'rejected', 'login')),
+  action TEXT NOT NULL CHECK (action IN ('signup', 'approved', 'rejected', 'login', 'report_submitted', 'report_approved', 'report_rejected', 'pdf_generated')),
+  target_type TEXT,
+  target_id UUID,
+  details JSONB,
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -170,10 +173,25 @@ CREATE POLICY "Admins can view all audit logs"
     )
   );
 
--- Policy: Anyone authenticated can insert audit logs (for signup/login)
+-- Policy: Anyone authenticated can insert audit logs (for signup/login/reports)
 CREATE POLICY "Authenticated users can insert audit logs"
   ON audit_logs FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Drop old policy if exists and recreate for admin-only SELECT
+DROP POLICY IF EXISTS "Users can view own audit logs" ON audit_logs;
+DROP POLICY IF EXISTS "Admins can view all audit logs" ON audit_logs;
+
+-- Policy: Only admins can view audit logs (for governance)
+CREATE POLICY "Admins can view all audit logs"
+  ON audit_logs FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_profiles_health_center_id ON profiles(health_center_id);
@@ -185,3 +203,4 @@ CREATE INDEX IF NOT EXISTS idx_monthly_statistics_approved_by ON monthly_statist
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_target ON audit_logs(target_type, target_id);

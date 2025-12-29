@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { generateApprovedReportPDF } from "@/lib/pdfGenerator";
+import { logAudit } from "@/lib/audit";
 
 /* =========================
    Constants
@@ -306,6 +307,17 @@ export default function StatisticsPage() {
             report_id: updatedData.id,
             statistics_data: updatedData.statistics_data,
           });
+
+          // Log audit event for report submission
+          await logAudit(user.id, "report_submitted", {
+            targetType: "monthly_statistics",
+            targetId: updatedData.id,
+            details: {
+              month: selectedMonth,
+              year: currentYear,
+              health_center_name: healthCenterName,
+            },
+          });
         }
 
         alert("تم إرسال التقرير بنجاح! سيتم مراجعته من قبل إدارة القطاع.");
@@ -318,7 +330,7 @@ export default function StatisticsPage() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!reportInfo || !profile || reportInfo.status !== "approved") {
+    if (!reportInfo || !profile || !user || reportInfo.status !== "approved") {
       alert("التقرير غير معتمد بعد");
       return;
     }
@@ -342,6 +354,8 @@ export default function StatisticsPage() {
         statisticsData: reportInfo.statistics_data,
         approvedAt: reportInfo.approved_at,
         approvedByName: approvedByName,
+        userId: user.id,
+        reportId: reportInfo.report_id,
       });
     } catch (error) {
       console.error("Error generating PDF:", error);

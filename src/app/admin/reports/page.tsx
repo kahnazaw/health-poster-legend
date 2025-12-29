@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { logAudit } from "@/lib/audit";
 
 interface Report {
   id: string;
@@ -165,6 +166,20 @@ export default function AdminReportsPage() {
         return;
       }
 
+      // Get report details for audit log
+      const report = reports.find((r) => r.id === reportId);
+      if (report) {
+        await logAudit(user.id, "report_approved", {
+          targetType: "monthly_statistics",
+          targetId: reportId,
+          details: {
+            month: getMonthName(report.month),
+            year: report.year,
+            health_center_name: report.health_center_name,
+          },
+        });
+      }
+
       setSuccessMessage("تمت الموافقة على التقرير بنجاح");
       setApproving(null);
       await loadReports();
@@ -210,6 +225,21 @@ export default function AdminReportsPage() {
         setError("حدث خطأ أثناء رفض التقرير");
         setRejecting(null);
         return;
+      }
+
+      // Get report details for audit log
+      const report = reports.find((r) => r.id === selectedReportId);
+      if (report) {
+        await logAudit(user.id, "report_rejected", {
+          targetType: "monthly_statistics",
+          targetId: selectedReportId,
+          details: {
+            month: getMonthName(report.month),
+            year: report.year,
+            health_center_name: report.health_center_name,
+            rejection_reason: rejectReason.trim(),
+          },
+        });
       }
 
       setSuccessMessage("تم رفض التقرير بنجاح");

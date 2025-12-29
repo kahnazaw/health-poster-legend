@@ -51,6 +51,7 @@ interface SubmissionStatus {
   centerName: string;
   submitted: boolean;
   submittedAt?: string;
+  status?: "draft" | "submitted" | "approved" | "rejected";
   totals?: {
     individualSessions: number;
     lectures: number;
@@ -166,7 +167,7 @@ export default function SectorDashboardPage() {
       // Load from database
       const { data: dbData, error } = await supabase
         .from("monthly_statistics")
-        .select("health_center_name, created_at, statistics_data")
+        .select("health_center_name, created_at, statistics_data, status")
         .eq("month", selectedMonth)
         .eq("year", selectedYear);
 
@@ -176,6 +177,7 @@ export default function SectorDashboardPage() {
           dbSubmissions.set(record.health_center_name, {
             submitted: true,
             submittedAt: record.created_at,
+            status: record.status || "submitted",
             totals: calculateTotals(record.statistics_data),
           });
         });
@@ -191,6 +193,7 @@ export default function SectorDashboardPage() {
               centerName: center,
               submitted: true,
               submittedAt: dbRecord.submittedAt,
+              status: dbRecord.status as "draft" | "submitted" | "approved" | "rejected" | undefined,
               totals: dbRecord.totals,
             };
           }
@@ -263,7 +266,7 @@ export default function SectorDashboardPage() {
   const handleExportToExcel = () => {
     const excelData: Array<{
       "اسم المركز الصحي": string;
-      "حالة الإرسال": string;
+      "الحالة": string;
       "تاريخ ووقت الإرسال": string;
       "مجموع الجلسات الفردية": number;
       "مجموع المحاضرات": number;
@@ -273,7 +276,16 @@ export default function SectorDashboardPage() {
     submissions.forEach((submission) => {
       excelData.push({
         "اسم المركز الصحي": submission.centerName,
-        "حالة الإرسال": submission.submitted ? "تم الإرسال" : "لم يتم الإرسال",
+        "الحالة": (() => {
+          const status = submission.status || (submission.submitted ? "submitted" : "draft");
+          const statusLabels = {
+            draft: "مسودة",
+            submitted: "قيد المراجعة",
+            approved: "معتمد",
+            rejected: "مرفوض",
+          };
+          return statusLabels[status as keyof typeof statusLabels] || "غير معروف";
+        })(),
         "تاريخ ووقت الإرسال": submission.submittedAt
           ? formatDate(submission.submittedAt)
           : "غير متوفر",
@@ -339,10 +351,7 @@ export default function SectorDashboardPage() {
     }
   };
 
-  const submittedCount = submissions.filter((s) => s.submitted).length;
-  const totalCenters = submissions.length;
-  const notSubmittedCount = totalCenters - submittedCount;
-  const submissionRate = totalCenters > 0 ? Math.round((submittedCount / totalCenters) * 100) : 0;
+  // Statistics are now calculated above with approval status
 
   // Calculate center activity rankings
   const centerActivity = submissions
@@ -421,6 +430,14 @@ export default function SectorDashboardPage() {
     .sort((a, b) => b.value - a.value);
 
   const totalActivity = centerActivity.reduce((sum, c) => sum + c.totalActivity, 0);
+
+  // Calculate approval statistics
+  const totalCenters = healthCenters.length;
+  const submittedCount = submissions.filter(s => s.submitted && s.status !== "draft").length;
+  const approvedCount = submissions.filter(s => s.status === "approved").length;
+  const rejectedCount = submissions.filter(s => s.status === "rejected").length;
+  const pendingCount = submissions.filter(s => s.status === "submitted").length;
+  const completionPercentage = totalCenters > 0 ? Math.round((approvedCount / totalCenters) * 100) : 0;
 
   const COLORS = [
     "#059669",
@@ -519,37 +536,45 @@ export default function SectorDashboardPage() {
             </div>
             <div className="flex items-end">
               <div className="w-full text-center p-3 bg-gray-100 rounded-lg">
-                <div className="text-sm text-gray-600">نسبة الإرسال</div>
+                <div className="text-sm text-gray-600">نسبة الإكمال</div>
                 <div className="text-2xl font-bold text-emerald-600">
-                  {submissionRate}%
+                  {completionPercentage}%
                 </div>
                 <div className="text-xs text-gray-500">
-                  {submittedCount} / {totalCenters}
+                  {approvedCount} / {totalCenters}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Summary Indicators */}
+        {/* Summary Indicators with Approval Status */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-emerald-700">مؤشرات ملخصة</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <h2 className="text-xl font-bold mb-4 text-emerald-700">مؤشرات الحالة والموافقة</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">إجمالي المراكز الصحية</div>
+              <div className="text-sm text-gray-600 mb-1">إجمالي المراكز</div>
               <div className="text-3xl font-bold text-blue-600">{totalCenters}</div>
             </div>
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="text-sm text-gray-600 mb-1">قيد المراجعة</div>
+              <div className="text-3xl font-bold text-yellow-600">{pendingCount}</div>
+            </div>
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-sm text-gray-600 mb-1">المراكز التي أرسلت</div>
-              <div className="text-3xl font-bold text-green-600">{submittedCount}</div>
+              <div className="text-sm text-gray-600 mb-1">معتمد</div>
+              <div className="text-3xl font-bold text-green-600">{approvedCount}</div>
             </div>
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <div className="text-sm text-gray-600 mb-1">المراكز التي لم ترسل</div>
-              <div className="text-3xl font-bold text-red-600">{notSubmittedCount}</div>
+              <div className="text-sm text-gray-600 mb-1">مرفوض</div>
+              <div className="text-3xl font-bold text-red-600">{rejectedCount}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600 mb-1">لم يرسل</div>
+              <div className="text-3xl font-bold text-gray-600">{totalCenters - submittedCount}</div>
             </div>
             <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
-              <div className="text-sm text-gray-600 mb-1">نسبة الإرسال</div>
-              <div className="text-3xl font-bold text-emerald-600">{submissionRate}%</div>
+              <div className="text-sm text-gray-600 mb-1">نسبة الإكمال</div>
+              <div className="text-3xl font-bold text-emerald-600">{completionPercentage}%</div>
             </div>
           </div>
         </div>
@@ -671,7 +696,7 @@ export default function SectorDashboardPage() {
                   <th className="border border-gray-300 px-4 py-3 text-right">
                     اسم المركز الصحي
                   </th>
-                  <th className="border border-gray-300 px-4 py-3">حالة الإرسال</th>
+                  <th className="border border-gray-300 px-4 py-3">الحالة</th>
                   <th className="border border-gray-300 px-4 py-3">تاريخ ووقت الإرسال</th>
                   <th className="border border-gray-300 px-4 py-3">مجموع الجلسات الفردية</th>
                   <th className="border border-gray-300 px-4 py-3">مجموع المحاضرات</th>
@@ -692,15 +717,21 @@ export default function SectorDashboardPage() {
                         {submission.centerName}
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-center">
-                        {submission.submitted ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                            تم الإرسال
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                            لم يتم الإرسال
-                          </span>
-                        )}
+                        {(() => {
+                          const status = submission.status || (submission.submitted ? "submitted" : "draft");
+                          const statusConfig = {
+                            draft: { label: "مسودة", className: "bg-gray-100 text-gray-800" },
+                            submitted: { label: "قيد المراجعة", className: "bg-yellow-100 text-yellow-800" },
+                            approved: { label: "معتمد", className: "bg-green-100 text-green-800" },
+                            rejected: { label: "مرفوض", className: "bg-red-100 text-red-800" },
+                          };
+                          const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+                          return (
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.className}`}>
+                              {config.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-center text-sm">
                         {submission.submittedAt ? formatDate(submission.submittedAt) : "-"}
