@@ -19,10 +19,13 @@ export default function LoginClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه
+  // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه تلقائياً
+  // منع الدخول المتكرر: إذا كان المستخدم مسجل دخول بالفعل، يتم نقله تلقائياً إلى لوحة التحكم
   useEffect(() => {
     if (!authLoading && user) {
       const targetPath = profile?.role === "admin" ? "/admin/approvals" : "/poster-studio";
+      console.log("User already logged in, redirecting to:", targetPath);
+      router.refresh();
       router.replace(targetPath);
     }
   }, [user, profile, authLoading, router]);
@@ -68,13 +71,15 @@ export default function LoginClient() {
         } else if (authData?.user) {
           // نجح تسجيل الدخول - توجيه مباشر
           console.log("Admin login successful, redirecting...");
-          window.location.href = '/admin/approvals';
+          router.refresh();
+          router.push('/admin/approvals');
           return;
         }
         
         // إذا لم ينجح تسجيل الدخول ولم يوجد في profiles، توجيه مباشر (تطوير فقط)
         console.log("Admin bypass: Direct redirect (development mode)");
-        window.location.href = '/admin/approvals';
+        router.refresh();
+        router.push('/admin/approvals');
         return;
       }
 
@@ -161,7 +166,11 @@ export default function LoginClient() {
             } else {
               // تم إنشاء profile بنجاح، إعادة المحاولة
               console.log("Profile created successfully, retrying login...");
-              window.location.reload();
+              router.refresh();
+              // إعادة تحميل الصفحة بعد إنشاء profile
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
               return;
             }
           }
@@ -199,10 +208,11 @@ export default function LoginClient() {
         const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : "/poster-studio";
         
         // الانتظار قليلاً لضمان تحديث الجلسة
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // استخدام window.location.href لإعادة تحميل كامل للصفحة
-        window.location.href = finalRedirect;
+        // استخدام router.push مع router.refresh لتحديث حالة الجلسة
+        router.refresh();
+        router.push(finalRedirect);
       } else {
         setError("فشل تسجيل الدخول. تأكد من صحة البيانات.");
         setLoading(false);
@@ -265,7 +275,7 @@ export default function LoginClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white/80 backdrop-blur-sm text-gray-900 font-medium transition-all"
-                placeholder="example@health.gov.iq"
+                placeholder="البريد الإلكتروني"
               />
             </div>
 

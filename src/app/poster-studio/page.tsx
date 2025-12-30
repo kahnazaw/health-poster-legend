@@ -176,6 +176,11 @@ export default function PosterStudioPage() {
 
         // تحديث إحصائيات البوسترات في قاعدة البيانات
         try {
+          // استخدام أول صورة من المصفوفة (أو null إذا لم تكن موجودة)
+          const firstImageUrl = Array.isArray(data.images) && data.images.length > 0 
+            ? data.images[0] 
+            : data.imageUrl || null;
+          
           await supabase.from("poster_analytics").insert({
             user_id: user.id,
             campaign_type: "infographic",
@@ -183,8 +188,8 @@ export default function PosterStudioPage() {
             visual_style: "modern_infographic",
             language: language,
             suggested_title: data.suggestedTitle,
-            prompt: data.prompt,
-            image_url: data.imageUrl,
+            prompt: `الموضوع: ${topic}${healthCenterName ? ` | المركز: ${healthCenterName}` : ""}`,
+            image_url: firstImageUrl,
             download_count: 0,
             generated_at: new Date().toISOString(),
           });

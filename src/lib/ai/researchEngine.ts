@@ -23,9 +23,14 @@ export async function researchHealthTopic(
     throw new Error("Gemini API key not configured");
   }
 
+  // بناء البرومبت مع اسم المركز الصحي (إن وجد)
+  const centerContext = healthCenterName && healthCenterName.trim() 
+    ? `\n\nالسياق المحلي: هذا المحتوى سيُستخدم في ${healthCenterName} - قطاع كركوك الأول.`
+    : "";
+
   const researchPrompt = `أنت باحث طبي متخصص في الصحة العامة في العراق. مهمتك:
 
-1. البحث عن المعلومات الرسمية حول الموضوع: "${topic}"
+1. البحث عن المعلومات الرسمية حول الموضوع: "${topic}"${centerContext}
 
 2. المصادر المعتمدة (ابحث في هذه المصادر بالترتيب):
    - ملف نموذج احصائية.docx (إذا كان متوفراً في قاعدة البيانات) - هذا هو المصدر الأساسي للتصنيفات الرسمية
