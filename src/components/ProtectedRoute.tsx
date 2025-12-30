@@ -19,9 +19,15 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push(redirectTo);
-    }
+    // إعطاء وقت إضافي لتحميل الجلسة بعد إعادة التحميل
+    const checkAuth = setTimeout(() => {
+      if (!loading && !user) {
+        console.log("ProtectedRoute: No user found, redirecting to login");
+        router.push(redirectTo);
+      }
+    }, 500); // انتظار 500ms قبل التحقق
+    
+    return () => clearTimeout(checkAuth);
   }, [user, loading, redirectTo, router]);
 
   if (loading) {

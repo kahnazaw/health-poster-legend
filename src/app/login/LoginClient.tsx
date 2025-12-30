@@ -74,8 +74,21 @@ export default function LoginClient() {
           console.log("Admin login successful, verifying session...");
           setSuccessMessage("✅ نجح الدخول، جاري تحويلك...");
           setError("");
-          await supabase.auth.getSession(); // التأكد من حفظ الجلسة
-          await new Promise(resolve => setTimeout(resolve, 800)); // انتظار لعرض الرسالة
+          
+          // التحقق من حفظ الجلسة بشكل متكرر
+          let sessionVerified = false;
+          for (let i = 0; i < 5; i++) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              sessionVerified = true;
+              console.log("Session verified successfully");
+              break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+          
+          // انتظار إضافي لضمان حفظ الجلسة
+          await new Promise(resolve => setTimeout(resolve, 1000));
           window.location.href = '/admin/approvals'; // إعادة تحميل كاملة
           return;
         }
@@ -217,8 +230,25 @@ export default function LoginClient() {
         
         // التأكد من حفظ الجلسة قبل التوجيه (Full Page Reload)
         console.log("Login successful, verifying session before redirect...");
-        await supabase.auth.getSession(); // التأكد من حفظ الجلسة في المتصفح
-        await new Promise(resolve => setTimeout(resolve, 800)); // انتظار أطول لعرض الرسالة
+        
+        // التحقق من حفظ الجلسة بشكل متكرر
+        let sessionVerified = false;
+        for (let i = 0; i < 5; i++) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            sessionVerified = true;
+            console.log("Session verified successfully");
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        if (!sessionVerified) {
+          console.warn("Session not verified, but proceeding with redirect...");
+        }
+        
+        // انتظار إضافي لضمان حفظ الجلسة في localStorage
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // استخدام window.location.href لإعادة تحميل كاملة للصفحة (تجاوز Cache)
         window.location.href = finalRedirect;

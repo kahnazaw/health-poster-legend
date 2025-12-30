@@ -65,22 +65,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        loadProfile(currentUser);
-      } else {
+    // تحميل الجلسة فوراً (مهم جداً بعد إعادة التحميل)
+    const loadSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        
+        if (error) {
+          console.error("Error loading session:", error);
+        }
+        
+        setUser(currentUser);
+        if (currentUser) {
+          await loadProfile(currentUser);
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error("Error in loadSession:", error);
+        setUser(null);
         setProfile(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    loadSession();
+
+    // الاستماع لتغييرات حالة المصادقة
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
-        loadProfile(currentUser);
+        await loadProfile(currentUser);
       } else {
         setProfile(null);
       }
