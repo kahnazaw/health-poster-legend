@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
@@ -11,8 +11,6 @@ import { LogIn, Mail, Lock, Sparkles } from "lucide-react";
 
 export default function LoginClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/poster-studio";
   const { user, profile, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -20,17 +18,26 @@ export default function LoginClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [redirectChecked, setRedirectChecked] = useState(false);
 
-  // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه تلقائياً
-  // منع الدخول المتكرر: إذا كان المستخدم مسجل دخول بالفعل، يتم نقله تلقائياً إلى لوحة التحكم
+  // Redirect check - only after initial render and auth loading completes
+  // This prevents blocking the initial render
   useEffect(() => {
-    if (!authLoading && user) {
+    // Wait for auth to finish loading before checking redirect
+    if (authLoading) return;
+    
+    // Only check redirect once
+    if (redirectChecked) return;
+    setRedirectChecked(true);
+
+    // If user is already logged in, redirect them
+    if (user) {
       const targetPath = profile?.role === "admin" ? "/admin/approvals" : "/poster-studio";
       console.log("User already logged in, redirecting to:", targetPath);
-      // استخدام window.location.href لإعادة تحميل كاملة (تجاوز Cache)
+      // Use window.location.href for full page reload (bypass cache)
       window.location.href = targetPath;
     }
-  }, [user, profile, authLoading]);
+  }, [user, profile, authLoading, redirectChecked]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,92 +47,22 @@ export default function LoginClient() {
     try {
       const emailTrimmed = email.toLowerCase().trim();
       
-      // منطق الدخول المباشر للمدير (Emergency Bypass)
-      if (emailTrimmed === 'admin@health.com' || emailTrimmed === 'admin@health.gov.iq') {
-        console.log("Admin Bypass Triggered for:", emailTrimmed);
-        
-        // محاولة تسجيل الدخول أولاً (إذا كانت كلمة المرور صحيحة)
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: emailTrimmed,
-          password: password,
-        });
-
-        if (authError) {
-          // إذا فشل تسجيل الدخول، تحقق من وجود المستخدم في profiles
-          console.log("Auth failed, checking profile existence...");
-          const { data: profileCheck } = await supabase
-            .from("profiles")
-            .select("id, email, role, is_approved")
-            .eq("email", emailTrimmed)
-            .single();
-
-          if (profileCheck && profileCheck.role === "admin") {
-            // المستخدم موجود كمدير في profiles لكن فشل تسجيل الدخول
-            setError(`⚠️ المستخدم موجود في النظام لكن كلمة المرور غير صحيحة.\n\n` +
-              `إذا نسيت كلمة المرور:\n` +
-              `1. اذهب إلى Supabase Dashboard → Authentication → Users\n` +
-              `2. ابحث عن ${emailTrimmed}\n` +
-              `3. اضغط "Reset Password" أو أنشئ كلمة مرور جديدة\n\n` +
-              `أو يمكنك استخدام: admin@health.com بدون كلمة مرور للدخول المباشر (تطوير فقط)`);
-            setLoading(false);
-            return;
-          }
-        } else if (authData?.user) {
-          // نجح تسجيل الدخول - تأكد من حفظ الجلسة ثم توجيه مباشر
-          console.log("Admin login successful, verifying session...");
-          setSuccessMessage("✅ نجح الدخول، جاري تحويلك...");
-          setError("");
-          
-          // التحقق من حفظ الجلسة بشكل متكرر
-          let sessionVerified = false;
-          for (let i = 0; i < 5; i++) {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              sessionVerified = true;
-              console.log("Session verified successfully");
-              break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
-          
-          // انتظار إضافي لضمان حفظ الجلسة
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          window.location.href = '/admin/approvals'; // إعادة تحميل كاملة
-          return;
-        }
-        
-        // إذا لم ينجح تسجيل الدخول ولم يوجد في profiles، توجيه مباشر (تطوير فقط)
-        console.log("Admin bypass: Direct redirect (development mode)");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.href = '/admin/approvals';
-        return;
-      }
-
-      // باقي الكود الأصلي للمستخدمين الآخرين
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      // 1. تسجيل الدخول
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: emailTrimmed,
         password: password,
       });
 
-      if (signInError) {
-        // رسائل خطأ أكثر وضوحاً
+      if (authError) {
+        // رسائل خطأ واضحة
         let errorMessage = "بيانات الدخول غير صحيحة.";
         
-        if (signInError.message.includes("Invalid login credentials")) {
-          errorMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة.\n\n" +
-            "تأكد من:\n" +
-            "1. البريد الإلكتروني صحيح\n" +
-            "2. كلمة المرور صحيحة\n" +
-            "3. المستخدم موجود في Supabase Authentication";
-        } else if (signInError.message.includes("Email not confirmed")) {
+        if (authError.message.includes("Invalid login credentials")) {
+          errorMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+        } else if (authError.message.includes("Email not confirmed")) {
           errorMessage = "البريد الإلكتروني غير مفعّل. يرجى التحقق من بريدك الإلكتروني.";
-        } else if (signInError.message.includes("User not found")) {
-          errorMessage = `المستخدم "${emailTrimmed}" غير موجود في النظام.\n\n` +
-            "إذا كنت تعتقد أن هذا خطأ:\n" +
-            "1. تأكد من أن المستخدم موجود في Supabase Dashboard → Authentication → Users\n" +
-            "2. تأكد من أن email مطابق تماماً (حساس لحالة الأحرف)";
         } else {
-          errorMessage = `خطأ في تسجيل الدخول: ${signInError.message}`;
+          errorMessage = `خطأ في تسجيل الدخول: ${authError.message}`;
         }
         
         setError(errorMessage);
@@ -133,140 +70,56 @@ export default function LoginClient() {
         return;
       }
 
-      if (data?.user) {
-        // Check if user is approved by fetching profile
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("is_approved, role, full_name, email, health_center_id")
-          .eq("id", data.user.id)
-          .single();
+      if (!data?.user) {
+        setError("فشل تسجيل الدخول. تأكد من صحة البيانات.");
+        setLoading(false);
+        return;
+      }
 
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-          
-          // محاولة البحث بالبريد الإلكتروني كبديل
-          const { data: profileByEmail } = await supabase
-            .from("profiles")
-            .select("id, email, full_name, role, is_approved, health_center_id")
-            .eq("email", emailTrimmed)
-            .single();
+      // 2. التحقق من Profile والموافقة
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_approved, role, full_name, email, health_center_id")
+        .eq("id", data.user.id)
+        .single();
 
-          if (profileByEmail) {
-            setError(`⚠️ تم العثور على المستخدم في profiles لكن هناك عدم تطابق في ID.\n\n` +
-              `User ID في auth.users: ${data.user.id}\n` +
-              `Profile ID في profiles: ${profileByEmail.id}\n\n` +
-              `الحل: تأكد من أن profile.id يطابق auth.users.id تماماً.`);
-          } else {
-            // محاولة إنشاء profile تلقائياً إذا لم يكن موجوداً
-            console.log("Profile not found, attempting to create automatically...");
-            const { error: createError } = await supabase
-              .from("profiles")
-              .insert({
-                id: data.user.id,
-                email: emailTrimmed,
-                full_name: data.user.user_metadata?.full_name || "مستخدم جديد",
-                role: "center_user",
-                is_approved: false,
-                health_center_name: "",
-              });
+      if (profileError || !profileData) {
+        setError("حساب المستخدم غير موجود في النظام. يرجى التواصل مع الإدارة.");
+        setLoading(false);
+        return;
+      }
 
-            if (createError) {
-              setError(`خطأ في جلب بيانات المستخدم: ${profileError.message}\n\n` +
-                `المستخدم موجود في auth.users لكن غير موجود في profiles.\n\n` +
-                `الحل:\n` +
-                `1. اذهب إلى Supabase SQL Editor\n` +
-                `2. قم بتشغيل:\n` +
-                `INSERT INTO public.profiles (id, email, full_name, role, is_approved)\n` +
-                `VALUES ('${data.user.id}', '${emailTrimmed}', 'اسم المستخدم', 'center_user', false)\n` +
-                `ON CONFLICT (id) DO NOTHING;`);
-              setLoading(false);
-              return;
-            } else {
-              // تم إنشاء profile بنجاح، إعادة المحاولة
-              console.log("Profile created successfully, retrying login...");
-              router.refresh();
-              // إعادة تحميل الصفحة بعد إنشاء profile
-              setTimeout(() => {
-                window.location.reload();
-              }, 500);
-              return;
-            }
-          }
-          
-          setLoading(false);
-          return;
-        }
+      // التحقق من الموافقة (Admin يتجاوز هذا التحقق)
+      if (profileData.role !== "admin" && profileData.is_approved === false) {
+        await supabase.auth.signOut();
+        setError("حسابك قيد المراجعة من الإدارة. يرجى انتظار الموافقة.");
+        setLoading(false);
+        return;
+      }
 
-        if (!profileData) {
-          setError(`حساب المستخدم غير موجود في جدول profiles.\n\n` +
-            `User ID: ${data.user.id}\n` +
-            `Email: ${emailTrimmed}\n\n` +
-            `يرجى إنشاء profile يدوياً في Supabase.`);
-          setLoading(false);
-          return;
-        }
+      // 3. تسجيل حدث الدخول (غير حرج)
+      try {
+        await logAudit(data.user.id, "login");
+      } catch (auditError) {
+        console.warn("Audit log failed (non-critical):", auditError);
+      }
 
-        // Admin users bypass approval check
-        if (profileData.role !== "admin" && profileData.is_approved === false) {
-          await supabase.auth.signOut();
-          setError("حسابك قيد المراجعة من الإدارة. يرجى انتظار الموافقة.");
-          setLoading(false);
-          return;
-        }
-
-        // Log audit event for successful login
-        try {
-          await logAudit(data.user.id, "login");
-        } catch (auditError) {
-          console.warn("Audit log failed (non-critical):", auditError);
-        }
-
-        // User is approved, redirect to appropriate page
-        // التوجيه التلقائي إلى /poster-studio بعد تسجيل الدخول الناجح
+      // 4. التحقق القسري من الجلسة وتخزينها في المتصفح
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // 5. استخدام التحميل الكامل للصفحة لضمان قراءة ملفات الارتباط (Cookies)
+        // هذا يحل مشكلة "جاري الدخول" الأبدية
         const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : "/poster-studio";
-        
-        // عرض رسالة نجاح
-        setSuccessMessage("✅ نجح الدخول، جاري تحويلك...");
-        setError(""); // مسح أي أخطاء سابقة
-        
-        // التأكد من حفظ الجلسة قبل التوجيه (Full Page Reload)
-        console.log("Login successful, verifying session before redirect...");
-        
-        // التحقق من حفظ الجلسة بشكل متكرر
-        let sessionVerified = false;
-        for (let i = 0; i < 5; i++) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            sessionVerified = true;
-            console.log("Session verified successfully");
-            break;
-          }
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        
-        if (!sessionVerified) {
-          console.warn("Session not verified, but proceeding with redirect...");
-        }
-        
-        // انتظار إضافي لضمان حفظ الجلسة في localStorage
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // استخدام window.location.href لإعادة تحميل كاملة للصفحة (تجاوز Cache)
         window.location.href = finalRedirect;
       } else {
-        setError("فشل تسجيل الدخول. تأكد من صحة البيانات.");
+        setError("فشل في التحقق من الجلسة. يرجى المحاولة مرة أخرى.");
         setLoading(false);
       }
     } catch (err: any) {
       const errorMessage = err?.message || "حدث خطأ غير متوقع";
       console.error("Login error:", err);
-      setError(`خطأ في تسجيل الدخول: ${errorMessage}\n\n` +
-        `إذا استمرت المشكلة:\n` +
-        `1. تحقق من اتصال الإنترنت\n` +
-        `2. تحقق من إعدادات Supabase\n` +
-        `3. راجع Console للأخطاء التفصيلية`);
-      setLoading(false);
-    } finally {
+      setError(`خطأ في تسجيل الدخول: ${errorMessage}`);
       setLoading(false);
     }
   };
