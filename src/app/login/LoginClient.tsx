@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
 import { useAuth } from "@/contexts/AuthContext";
+import AnimatedBackground from "@/components/ui/AnimatedBackground";
+import { LogIn, Mail, Lock, Sparkles } from "lucide-react";
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/statistics";
+  const redirectTo = searchParams.get("redirect") || "/poster-studio";
   const { user, profile, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -20,10 +22,10 @@ export default function LoginClient() {
   // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه
   useEffect(() => {
     if (!authLoading && user) {
-      const targetPath = profile?.role === "admin" ? "/admin/approvals" : redirectTo;
+      const targetPath = profile?.role === "admin" ? "/admin/approvals" : "/poster-studio";
       router.replace(targetPath);
     }
-  }, [user, profile, authLoading, router, redirectTo]);
+  }, [user, profile, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +114,7 @@ export default function LoginClient() {
         // Check if user is approved by fetching profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("is_approved, role, full_name, email")
+          .select("is_approved, role, full_name, email, health_center_id")
           .eq("id", data.user.id)
           .single();
 
@@ -122,7 +124,7 @@ export default function LoginClient() {
           // محاولة البحث بالبريد الإلكتروني كبديل
           const { data: profileByEmail } = await supabase
             .from("profiles")
-            .select("id, email, full_name, role, is_approved")
+            .select("id, email, full_name, role, is_approved, health_center_id")
             .eq("email", emailTrimmed)
             .single();
 
@@ -132,14 +134,36 @@ export default function LoginClient() {
               `Profile ID في profiles: ${profileByEmail.id}\n\n` +
               `الحل: تأكد من أن profile.id يطابق auth.users.id تماماً.`);
           } else {
-            setError(`خطأ في جلب بيانات المستخدم: ${profileError.message}\n\n` +
-              `المستخدم موجود في auth.users لكن غير موجود في profiles.\n\n` +
-              `الحل:\n` +
-              `1. اذهب إلى Supabase SQL Editor\n` +
-              `2. قم بتشغيل:\n` +
-              `INSERT INTO public.profiles (id, email, full_name, role, is_approved)\n` +
-              `VALUES ('${data.user.id}', '${emailTrimmed}', 'اسم المستخدم', 'center_user', false)\n` +
-              `ON CONFLICT (id) DO NOTHING;`);
+            // محاولة إنشاء profile تلقائياً إذا لم يكن موجوداً
+            console.log("Profile not found, attempting to create automatically...");
+            const { error: createError } = await supabase
+              .from("profiles")
+              .insert({
+                id: data.user.id,
+                email: emailTrimmed,
+                full_name: data.user.user_metadata?.full_name || "مستخدم جديد",
+                role: "center_user",
+                is_approved: false,
+                health_center_name: "",
+              });
+
+            if (createError) {
+              setError(`خطأ في جلب بيانات المستخدم: ${profileError.message}\n\n` +
+                `المستخدم موجود في auth.users لكن غير موجود في profiles.\n\n` +
+                `الحل:\n` +
+                `1. اذهب إلى Supabase SQL Editor\n` +
+                `2. قم بتشغيل:\n` +
+                `INSERT INTO public.profiles (id, email, full_name, role, is_approved)\n` +
+                `VALUES ('${data.user.id}', '${emailTrimmed}', 'اسم المستخدم', 'center_user', false)\n` +
+                `ON CONFLICT (id) DO NOTHING;`);
+              setLoading(false);
+              return;
+            } else {
+              // تم إنشاء profile بنجاح، إعادة المحاولة
+              console.log("Profile created successfully, retrying login...");
+              window.location.reload();
+              return;
+            }
           }
           
           setLoading(false);
@@ -171,8 +195,8 @@ export default function LoginClient() {
         }
 
         // User is approved, redirect to appropriate page
-        // استخدام window.location.href لإعادة تحميل الصفحة بالكامل وتحديث AuthContext
-        const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : redirectTo;
+        // التوجيه التلقائي إلى /poster-studio بعد تسجيل الدخول الناجح
+        const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : "/poster-studio";
         
         // الانتظار قليلاً لضمان تحديث الجلسة
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -198,58 +222,104 @@ export default function LoginClient() {
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {error && (
-        <div className="bg-red-50 border-r-4 border-red-500 p-4 text-red-700 text-sm whitespace-pre-line">
-          {error}
-        </div>
-      )}
+    <div className="relative min-h-screen flex items-center justify-center p-6">
+      {/* الخلفية المتحركة "نبض الصحة" */}
+      <AnimatedBackground />
+      
+      {/* نموذج تسجيل الدخول مع Glassmorphism */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="glass-effect rounded-3xl shadow-2xl border border-white/30 p-8 backdrop-blur-xl">
+          {/* العنوان */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl mb-4 shadow-lg">
+              <LogIn className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 font-tajawal mb-2">
+              تسجيل الدخول
+            </h2>
+            <p className="text-sm text-gray-600 font-medium">
+              قطاع كركوك الأول - المنصة الإدارية
+            </p>
+          </div>
 
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 text-right">
-          البريد الإلكتروني
-        </label>
-        <div className="mt-1">
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
+          {/* رسالة الخطأ */}
+          {error && (
+            <div className="bg-red-50 border-r-4 border-red-500 p-4 text-red-700 text-sm whitespace-pre-line rounded-xl mb-6">
+              {error}
+            </div>
+          )}
+
+          {/* نموذج الدخول */}
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* حقل البريد الإلكتروني */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-bold text-gray-700 text-right mb-2 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-emerald-600" />
+                البريد الإلكتروني
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white/80 backdrop-blur-sm text-gray-900 font-medium transition-all"
+                placeholder="example@health.gov.iq"
+              />
+            </div>
+
+            {/* حقل كلمة المرور */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-bold text-gray-700 text-right mb-2 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-600" />
+                كلمة المرور
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white/80 backdrop-blur-sm text-gray-900 font-medium transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* زر تسجيل الدخول */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 py-4 px-6 border border-transparent rounded-xl shadow-lg text-base font-black text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 ${
+                loading ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-[1.02]"
+              }`}
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>جاري الدخول...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>تسجيل الدخول</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* رابط التسجيل */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              ليس لديك حساب؟{" "}
+              <a href="/signup" className="text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
+                إنشاء حساب جديد
+              </a>
+            </p>
+          </div>
         </div>
       </div>
-
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 text-right">
-          كلمة المرور
-        </label>
-        <div className="mt-1">
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
-        </div>
-      </div>
-
-      <div>
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "جاري الدخول..." : "تسجيل الدخول"}
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }

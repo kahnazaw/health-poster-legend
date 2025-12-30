@@ -9,9 +9,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { researchHealthTopic } from "@/lib/ai/researchEngine";
 import { generateComponentIllustrations } from "@/lib/ai/componentImageGenerator";
+import { verifyAuth, verifyProfile } from "@/lib/api/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // التحقق من المصادقة
+    const { user, session, error: authError } = await verifyAuth(request);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "غير مصرح: يرجى تسجيل الدخول أولاً" },
+        { status: 401 }
+      );
+    }
+
+    // التحقق من وجود profile
+    const { profile, error: profileError } = await verifyProfile(user.id);
+    
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: "ملف المستخدم غير موجود. يرجى إنشاء حساب جديد." },
+        { status: 403 }
+      );
+    }
+
+    // التحقق من أن المستخدم معتمد (أو admin)
+    if (profile.role !== "admin" && !profile.is_approved) {
+      return NextResponse.json(
+        { error: "حسابك قيد المراجعة من الإدارة. يرجى انتظار الموافقة." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { topic, healthCenterName, language } = body;
 

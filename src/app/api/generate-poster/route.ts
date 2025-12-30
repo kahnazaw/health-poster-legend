@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateDetailedPrompt, generateImageWithGemini, generateSuggestedTitle } from "@/lib/ai/geminiImageGenerator";
+import { verifyAuth, verifyProfile } from "@/lib/api/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // التحقق من المصادقة (اختياري - يمكن تفعيله لاحقاً)
+    // const { user, session, error: authError } = await verifyAuth(request);
+    // 
+    // if (authError || !user) {
+    //   return NextResponse.json(
+    //     { error: "Unauthorized: Please login first" },
+    //     { status: 401 }
+    //   );
+    // }
+
     const body = await request.json();
     const { campaignType, targetAudience, visualStyle, language } = body;
 

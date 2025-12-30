@@ -60,14 +60,56 @@ export default function SignupPage() {
 
       if (data.user) {
         // Profile will be created automatically by trigger
+        // انتظار قليلاً لضمان إنشاء profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // التحقق من إنشاء profile
+        const { data: profileCheck } = await supabase
+          .from("profiles")
+          .select("id, is_approved")
+          .eq("id", data.user.id)
+          .single();
+
+        if (!profileCheck) {
+          // إذا لم يتم إنشاء profile تلقائياً، إنشاؤه يدوياً
+          console.log("Profile not created by trigger, creating manually...");
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: data.user.id,
+              email: email.toLowerCase().trim(),
+              full_name: fullName,
+              role: "center_user",
+              is_approved: false,
+              health_center_name: "",
+            });
+
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            setError("تم إنشاء الحساب لكن حدث خطأ في إنشاء الملف الشخصي. يرجى المحاولة مرة أخرى.");
+            setLoading(false);
+            return;
+          }
+        }
+
         // Log audit event
-        await logAudit(data.user.id, "signup");
+        try {
+          await logAudit(data.user.id, "signup");
+        } catch (auditError) {
+          console.warn("Audit log failed (non-critical):", auditError);
+        }
+
         setSuccess(true);
         setError("");
         // Clear form
         setFullName("");
         setEmail("");
         setPassword("");
+
+        // توجيه تلقائي إلى صفحة انتظار الموافقة
+        setTimeout(() => {
+          window.location.href = "/pending-approval";
+        }, 2000);
       }
     } catch (err) {
       setError("حدث خطأ غير متوقع");
