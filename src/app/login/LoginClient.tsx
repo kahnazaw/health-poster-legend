@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
 import { useAuth } from "@/contexts/AuthContext";
@@ -271,30 +272,43 @@ export default function LoginClient() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-6">
-      {/* الخلفية المتحركة "نبض الصحة" */}
+    <div className="relative min-h-screen flex items-center justify-center p-6 bg-slate-950">
+      {/* الخلفية المتحركة "نبض الصحة" - محدثة للخلفية الداكنة */}
       <AnimatedBackground />
       
-      {/* نموذج تسجيل الدخول مع Glassmorphism */}
+      {/* شعار قطاع كركوك الأول - ثابت في أعلى اليسار */}
+      <div className="fixed top-6 left-6 z-50 glass-effect rounded-2xl p-4 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center neon-glow">
+            <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-emerald-400 font-tajawal">قطاع كركوك الأول</p>
+            <p className="text-xs text-slate-400">المنصة الإدارية</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* نموذج تسجيل الدخول مع Glassmorphism - النسخة الأسطورية */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="glass-effect rounded-3xl shadow-2xl border border-white/30 p-8 backdrop-blur-xl">
-          {/* العنوان */}
+        <div className="glass-effect rounded-3xl shadow-2xl p-8 backdrop-blur-xl border-emerald-500/30">
+          {/* العنوان مع أيقونة متوهجة */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl mb-4 shadow-lg">
-              <LogIn className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl mb-4 shadow-lg neon-glow">
+              <LogIn className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 font-tajawal mb-2">
+            <h2 className="text-3xl font-black text-emerald-400 font-tajawal mb-2">
               تسجيل الدخول
             </h2>
-            <p className="text-sm text-gray-600 font-medium">
-              قطاع كركوك الأول - المنصة الإدارية
+            <p className="text-sm text-slate-400 font-medium">
+              مركز التحكم - المنصة الإدارية
             </p>
           </div>
 
           {/* رسالة النجاح */}
           {successMessage && (
-            <div className="bg-emerald-50 border-r-4 border-emerald-500 p-4 text-emerald-700 text-sm whitespace-pre-line rounded-xl mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-emerald-500/20 border-r-4 border-emerald-500 p-4 text-emerald-400 text-sm whitespace-pre-line rounded-xl mb-6 flex items-center gap-2 backdrop-blur-sm">
+              <svg className="w-5 h-5 flex-shrink-0 neon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               {successMessage}
@@ -303,18 +317,18 @@ export default function LoginClient() {
 
           {/* رسالة الخطأ */}
           {error && (
-            <div className="bg-red-50 border-r-4 border-red-500 p-4 text-red-700 text-sm whitespace-pre-line rounded-xl mb-6">
+            <div className="bg-red-500/20 border-r-4 border-red-500 p-4 text-red-400 text-sm whitespace-pre-line rounded-xl mb-6 backdrop-blur-sm">
               {error}
             </div>
           )}
 
           {/* نموذج الدخول */}
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* حقل البريد الإلكتروني */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-bold text-gray-700 text-right mb-2 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-600" />
-                البريد الإلكتروني
+            {/* حقل البريد الإلكتروني - Floating Label */}
+            <div className="relative">
+              <label htmlFor="email" className="absolute right-4 top-3 text-slate-400 text-sm font-medium flex items-center gap-2 pointer-events-none transition-all">
+                <Mail className="w-4 h-4 text-emerald-500 neon-glow" />
+                <span className={email ? "opacity-0" : ""}>البريد الإلكتروني</span>
               </label>
               <input
                 id="email"
@@ -323,16 +337,16 @@ export default function LoginClient() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white/80 backdrop-blur-sm text-gray-900 font-medium transition-all"
-                placeholder="البريد الإلكتروني"
+                className="w-full px-4 py-3 pr-12 border-2 border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900/50 backdrop-blur-sm text-slate-100 font-medium transition-all placeholder:text-slate-500"
+                placeholder=""
               />
             </div>
 
-            {/* حقل كلمة المرور */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-bold text-gray-700 text-right mb-2 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-emerald-600" />
-                كلمة المرور
+            {/* حقل كلمة المرور - Floating Label */}
+            <div className="relative">
+              <label htmlFor="password" className="absolute right-4 top-3 text-slate-400 text-sm font-medium flex items-center gap-2 pointer-events-none transition-all">
+                <Lock className="w-4 h-4 text-emerald-500 neon-glow" />
+                <span className={password ? "opacity-0" : ""}>كلمة المرور</span>
               </label>
               <input
                 id="password"
@@ -341,17 +355,17 @@ export default function LoginClient() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white/80 backdrop-blur-sm text-gray-900 font-medium transition-all"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 pr-12 border-2 border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900/50 backdrop-blur-sm text-slate-100 font-medium transition-all placeholder:text-slate-500"
+                placeholder=""
               />
             </div>
 
-            {/* زر تسجيل الدخول */}
+            {/* زر تسجيل الدخول - مع Neon Glow */}
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex items-center justify-center gap-2 py-4 px-6 border border-transparent rounded-xl shadow-lg text-base font-black text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 ${
-                loading ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-[1.02]"
+              className={`w-full flex items-center justify-center gap-2 py-4 px-6 border border-transparent rounded-xl shadow-lg text-base font-black text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 ${
+                loading ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:shadow-emerald-500/50 hover:scale-[1.02] neon-glow"
               }`}
             >
               {loading ? (
@@ -370,9 +384,9 @@ export default function LoginClient() {
 
           {/* رابط التسجيل */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-400">
               ليس لديك حساب؟{" "}
-              <a href="/signup" className="text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
+              <a href="/signup" className="text-emerald-400 font-bold hover:text-emerald-300 transition-colors neon-glow">
                 إنشاء حساب جديد
               </a>
             </p>

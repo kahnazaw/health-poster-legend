@@ -1,23 +1,70 @@
 // =====================================================
-// MIDDLEWARE - Login Loop Prevention
+// MIDDLEWARE - الإصلاح الجذري لحلقة تسجيل الدخول
 // =====================================================
-// منع حلقة تسجيل الدخول: إذا كان المستخدم مسجل دخول بالفعل
-// وحاول الوصول إلى /login، يتم توجيهه تلقائياً
+// استخدام Supabase Auth Helpers للتحقق من الجلسة في Server-side
+// توجيه قسري بدون تعقيدات
 
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  
+  // إنشاء Supabase client للـ middleware
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          req.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          res.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          req.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+          res.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+        },
+      },
+    }
+  );
 
-  // إذا كان المسار هو /login، نتحقق من وجود جلسة نشطة
-  // لكن لا نتحقق من Supabase هنا (لأنه server-side)
-  // بدلاً من ذلك، نعتمد على Client-side redirect في LoginClient.tsx
-  
-  // السماح بجميع المسارات الأخرى بدون تدخل
-  // (الحماية تتم في Client-side لتجنب مشاكل Cache)
-  
-  return NextResponse.next();
+  // التحقق من الجلسة
+  const { data: { session } } = await supabase.auth.getSession();
+  const pathname = req.nextUrl.pathname;
+
+  // إذا كان المستخدم في صفحة الدخول ومعه جلسة، انقله فوراً للاستوديو
+  if (session && pathname === '/login') {
+    const redirectUrl = new URL('/poster-studio', req.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // حماية صفحات الإدارة والاستوديو
+  if (!session && (pathname.startsWith('/poster-studio') || pathname.startsWith('/admin'))) {
+    const redirectUrl = new URL('/login', req.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  return res;
 }
 
 // تحديد المسارات التي يجب تطبيق middleware عليها
