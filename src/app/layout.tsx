@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import AnimatedBackground from "@/components/ui/AnimatedBackground";
 import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="antialiased selection:bg-[#059669]/20">
         <AuthProvider>
-          <div className="animated-bg" /> {/* الخلفية المتحركة */}
+          <AnimatedBackground /> {/* الخلفية المتحركة "نبض الصحة" */}
           
           {/* هيدر آبل العائم */}
           <nav className="fixed top-6 left-0 right-0 z-[100] px-6">

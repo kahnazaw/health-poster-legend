@@ -371,7 +371,9 @@ export default function PosterStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* الخلفية المتحركة "نبض الصحة" */}
+      <div className="animated-bg" />
       {/* ترويسة رسمية */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -394,7 +396,7 @@ export default function PosterStudioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* العمود الأيمن - لوحة التحكم */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="glass-effect rounded-2xl shadow-lg border border-gray-100 p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
                   <Palette className="w-5 h-5 text-emerald-600" />
@@ -690,7 +692,7 @@ export default function PosterStudioPage() {
 
           {/* العمود الأيسر - منطقة المعاينة */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="glass-effect rounded-2xl shadow-lg border border-gray-100 p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                   <ImageIcon className="w-5 h-5 text-blue-600" />
@@ -877,23 +879,72 @@ export default function PosterStudioPage() {
                       )}
                     </div>
 
-                    {/* تذييل رسمي يحمل اسم المركز والمصدر */}
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-white">
-                      <div className="flex justify-between items-center flex-wrap gap-4 text-sm">
-                        <div className="flex-1 text-center">
-                          <p className="font-bold mb-1">
-                            تم الإعداد بواسطة: {healthCenterName || "قطاع كركوك الأول"}
-                          </p>
-                          {sources.length > 0 && (
-                            <p className="text-xs text-gray-300 mt-2">
-                              المصدر: {sources.join(" / ")}
+                    {/* التذييل الرسمي - الهوية المؤسسية المحسّنة */}
+                    <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-900 p-8 text-white relative overflow-hidden">
+                      {/* نمط خلفي متحرك */}
+                      <div className="absolute inset-0 opacity-10">
+                        <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500 rounded-full blur-3xl animate-pulse"></div>
+                        <div className="absolute bottom-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+                      </div>
+                      
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between flex-wrap gap-6">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="relative w-12 h-12 bg-white rounded-lg p-2 shadow-lg">
+                                <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+                              </div>
+                              <div>
+                                <p className="text-lg font-black font-tajawal">
+                                  إعداد: {healthCenterName || "قطاع كركوك الأول"}
+                                </p>
+                                <p className="text-sm font-bold opacity-90 mt-1">قطاع كركوك الأول - دائرة صحة كركوك</p>
+                              </div>
+                            </div>
+                            <p className="text-xs opacity-75 mt-2 flex items-center gap-2">
+                              <CheckCircle className="w-3 h-3" />
+                              رسالة صحية معتمدة من وحدة تعزيز الصحة
                             </p>
+                            {sources.length > 0 && (
+                              <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+                                <p className="text-xs font-bold mb-2 opacity-90 flex items-center gap-2">
+                                  <BookOpen className="w-3 h-3" />
+                                  المصادر المعتمدة:
+                                </p>
+                                <ul className="text-xs opacity-80 space-y-1">
+                                  {sources.map((source, idx) => (
+                                    <li key={idx} className="flex items-center gap-2">
+                                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                                      {source}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* QR Code في الزاوية */}
+                          {qrCodeUrl && (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="w-24 h-24 bg-white rounded-xl p-2 shadow-2xl">
+                                <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                              </div>
+                              <p className="text-xs font-bold opacity-75 text-center">امسح للوصول السريع</p>
+                            </div>
                           )}
                         </div>
-                        <div className="text-xs text-gray-400 text-right">
-                          {language === "tr"
-                            ? "Kerkük Birinci Sektör Sağlık Müdürlüğü"
-                            : "دائرة صحة كركوك - وحدة تعزيز الصحة"}
+                        
+                        {/* شريط معلومات إضافي */}
+                        <div className="mt-6 pt-6 border-t border-white/20 flex items-center justify-center gap-6 flex-wrap">
+                          <div className="text-center">
+                            <p className="text-xs opacity-75">رسالة صحية معتمدة</p>
+                            <p className="text-xs font-bold mt-1">من وحدة تعزيز الصحة</p>
+                          </div>
+                          <div className="w-px h-8 bg-white/30"></div>
+                          <div className="text-center">
+                            <p className="text-xs opacity-75">محتوى مبني على</p>
+                            <p className="text-xs font-bold mt-1">المصادر الرسمية</p>
+                          </div>
                         </div>
                       </div>
                     </div>
