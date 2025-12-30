@@ -1,38 +1,22 @@
 // =====================================================
-// MIDDLEWARE DISABLED - Direct Access Bypass Enabled
+// MIDDLEWARE - Login Loop Prevention
 // =====================================================
-// تم تعطيل middleware تماماً للسماح بالوصول المباشر
-// لجميع الصفحات بدون إعادة توجيه تلقائي
+// منع حلقة تسجيل الدخول: إذا كان المستخدم مسجل دخول بالفعل
+// وحاول الوصول إلى /login، يتم توجيهه تلقائياً
 
-/*
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // السماح بالوصول إلى /admin إذا كان هناك cookie معين (للتطوير/الاختبار)
-  const adminBypassCookie = request.cookies.get('admin_bypass');
-  const isAdminBypass = adminBypassCookie?.value === 'true' || adminBypassCookie?.value === 'kirkuk-admin-2024';
-
-  // إذا كان المسار يبدأ بـ /admin
-  if (pathname.startsWith('/admin')) {
-    // السماح بالوصول إذا كان هناك cookie bypass
-    if (isAdminBypass) {
-      console.log('Admin bypass enabled via cookie - allowing access to:', pathname);
-      return NextResponse.next();
-    }
-
-    // تعطيل إعادة التوجيه التلقائي مؤقتاً للاختبار
-    // يمكنك تعليق هذا الجزء إذا أردت إعادة تفعيل الحماية
-    // return NextResponse.redirect(new URL('/login', request.url));
-
-    // مؤقتاً: السماح بالوصول بدون إعادة توجيه (للتطوير)
-    console.log('Admin route access allowed (development mode):', pathname);
-    return NextResponse.next();
-  }
-
-  // السماح بجميع المسارات الأخرى
+  // إذا كان المسار هو /login، نتحقق من وجود جلسة نشطة
+  // لكن لا نتحقق من Supabase هنا (لأنه server-side)
+  // بدلاً من ذلك، نعتمد على Client-side redirect في LoginClient.tsx
+  
+  // السماح بجميع المسارات الأخرى بدون تدخل
+  // (الحماية تتم في Client-side لتجنب مشاكل Cache)
+  
   return NextResponse.next();
 }
 
@@ -47,16 +31,5 @@ export const config = {
     // - public files (public folder)
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-};
-*/
-
-// Middleware معطل - السماح بجميع الطلبات
-export function middleware(request: any) {
-  // لا شيء - السماح بجميع الطلبات
-  return;
-}
-
-export const config = {
-  matcher: [],
 };
 

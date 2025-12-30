@@ -18,6 +18,7 @@ export default function LoginClient() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه تلقائياً
   // منع الدخول المتكرر: إذا كان المستخدم مسجل دخول بالفعل، يتم نقله تلقائياً إلى لوحة التحكم
@@ -25,10 +26,10 @@ export default function LoginClient() {
     if (!authLoading && user) {
       const targetPath = profile?.role === "admin" ? "/admin/approvals" : "/poster-studio";
       console.log("User already logged in, redirecting to:", targetPath);
-      router.refresh();
-      router.replace(targetPath);
+      // استخدام window.location.href لإعادة تحميل كاملة (تجاوز Cache)
+      window.location.href = targetPath;
     }
-  }, [user, profile, authLoading, router]);
+  }, [user, profile, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,17 +70,20 @@ export default function LoginClient() {
             return;
           }
         } else if (authData?.user) {
-          // نجح تسجيل الدخول - توجيه مباشر
-          console.log("Admin login successful, redirecting...");
-          router.refresh();
-          router.push('/admin/approvals');
+          // نجح تسجيل الدخول - تأكد من حفظ الجلسة ثم توجيه مباشر
+          console.log("Admin login successful, verifying session...");
+          setSuccessMessage("✅ نجح الدخول، جاري تحويلك...");
+          setError("");
+          await supabase.auth.getSession(); // التأكد من حفظ الجلسة
+          await new Promise(resolve => setTimeout(resolve, 800)); // انتظار لعرض الرسالة
+          window.location.href = '/admin/approvals'; // إعادة تحميل كاملة
           return;
         }
         
         // إذا لم ينجح تسجيل الدخول ولم يوجد في profiles، توجيه مباشر (تطوير فقط)
         console.log("Admin bypass: Direct redirect (development mode)");
-        router.refresh();
-        router.push('/admin/approvals');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.href = '/admin/approvals';
         return;
       }
 
@@ -207,12 +211,17 @@ export default function LoginClient() {
         // التوجيه التلقائي إلى /poster-studio بعد تسجيل الدخول الناجح
         const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : "/poster-studio";
         
-        // الانتظار قليلاً لضمان تحديث الجلسة
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // عرض رسالة نجاح
+        setSuccessMessage("✅ نجح الدخول، جاري تحويلك...");
+        setError(""); // مسح أي أخطاء سابقة
         
-        // استخدام router.push مع router.refresh لتحديث حالة الجلسة
-        router.refresh();
-        router.push(finalRedirect);
+        // التأكد من حفظ الجلسة قبل التوجيه (Full Page Reload)
+        console.log("Login successful, verifying session before redirect...");
+        await supabase.auth.getSession(); // التأكد من حفظ الجلسة في المتصفح
+        await new Promise(resolve => setTimeout(resolve, 800)); // انتظار أطول لعرض الرسالة
+        
+        // استخدام window.location.href لإعادة تحميل كاملة للصفحة (تجاوز Cache)
+        window.location.href = finalRedirect;
       } else {
         setError("فشل تسجيل الدخول. تأكد من صحة البيانات.");
         setLoading(false);
@@ -251,6 +260,16 @@ export default function LoginClient() {
               قطاع كركوك الأول - المنصة الإدارية
             </p>
           </div>
+
+          {/* رسالة النجاح */}
+          {successMessage && (
+            <div className="bg-emerald-50 border-r-4 border-emerald-500 p-4 text-emerald-700 text-sm whitespace-pre-line rounded-xl mb-6 flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {successMessage}
+            </div>
+          )}
 
           {/* رسالة الخطأ */}
           {error && (
