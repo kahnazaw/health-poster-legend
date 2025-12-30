@@ -1,17 +1,31 @@
-// =====================================================
-// MIDDLEWARE - الإصلاح الجذري لحلقة تسجيل الدخول
-// =====================================================
-// استخدام Supabase Auth Helpers للتحقق من الجلسة في Server-side
-// توجيه قسري بدون تعقيدات
-
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  
-  // إنشاء Supabase client للـ middleware
+  const pathname = req.nextUrl.pathname;
+
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/signup',
+    '/pending-approval',
+    '/health-pulse',
+    '/gallery',
+    '/poster',
+  ];
+
+  // Check if current path is a public route
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
+
+  // Allow all public routes, API routes, and Next.js internal routes
+  if (isPublicRoute || pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
+    return res;
+  }
+
+  // Create Supabase client for session verification
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -48,35 +62,38 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // التحقق من الجلسة
+  // Verify session (this updates cookies)
   const { data: { session } } = await supabase.auth.getSession();
-  const pathname = req.nextUrl.pathname;
 
-  // إذا كان المستخدم في صفحة الدخول ومعه جلسة، انقله فوراً للاستوديو
-  if (session && pathname === '/login') {
-    const redirectUrl = new URL('/poster-studio', req.url);
-    return NextResponse.redirect(redirectUrl);
+  // Protected routes that require authentication
+  const isProtectedRoute = pathname.startsWith('/poster-studio') || pathname.startsWith('/admin');
+
+  // If accessing protected route without session, redirect to login
+  if (isProtectedRoute && !session) {
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // حماية صفحات الإدارة والاستوديو
-  if (!session && (pathname.startsWith('/poster-studio') || pathname.startsWith('/admin'))) {
-    const redirectUrl = new URL('/login', req.url);
-    return NextResponse.redirect(redirectUrl);
+  // If logged-in user tries to access login page, redirect to poster-studio
+  // (This prevents unnecessary redirects but doesn't force it during redesign)
+  if (session && pathname === '/login') {
+    return NextResponse.redirect(new URL('/poster-studio', req.url));
   }
 
   return res;
 }
 
-// تحديد المسارات التي يجب تطبيق middleware عليها
+// Configure which routes the middleware should run on
 export const config = {
   matcher: [
-    // Match all request paths except for the ones starting with:
-    // - api (API routes)
-    // - _next/static (static files)
-    // - _next/image (image optimization files)
-    // - favicon.ico (favicon file)
-    // - public files (public folder)
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
-
