@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logAudit } from "@/lib/audit";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/statistics";
+  const { user, profile, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // إذا كان المستخدم مسجل دخول بالفعل، إعادة توجيهه
+  useEffect(() => {
+    if (!authLoading && user) {
+      const targetPath = profile?.role === "admin" ? "/admin/approvals" : redirectTo;
+      router.replace(targetPath);
+    }
+  }, [user, profile, authLoading, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,9 +171,14 @@ export default function LoginClient() {
         }
 
         // User is approved, redirect to appropriate page
+        // استخدام window.location.href لإعادة تحميل الصفحة بالكامل وتحديث AuthContext
         const finalRedirect = profileData.role === "admin" ? "/admin/approvals" : redirectTo;
-        router.push(finalRedirect);
-        router.refresh();
+        
+        // الانتظار قليلاً لضمان تحديث الجلسة
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // استخدام window.location.href لإعادة تحميل كامل للصفحة
+        window.location.href = finalRedirect;
       } else {
         setError("فشل تسجيل الدخول. تأكد من صحة البيانات.");
         setLoading(false);
