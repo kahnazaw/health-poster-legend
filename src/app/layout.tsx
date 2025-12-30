@@ -8,6 +8,7 @@ import AnimatedBackground from "@/components/ui/AnimatedBackground";
 import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const vazirmatn = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazirmatn" });
 const tajawal = Tajawal({ subsets: ["arabic"], weight: ['700', '900'], variable: "--font-tajawal" });
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="pt-32 pb-20">{children}</main>
           <BottomNav />
           <PWAInstallPrompt />
+          <SpeedInsights />
         </AuthProvider>
         <Script id="register-sw" strategy="afterInteractive">
           {`
