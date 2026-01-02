@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trophy, TrendingUp, AlertTriangle, Calendar, BarChart3, Activity, Award, Zap } from "lucide-react";
+import { Trophy, TrendingUp, AlertTriangle, Calendar, BarChart3, Activity, Award, Zap, Crown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { calculatePeriodScore } from "@/lib/analytics/scoringEngine";
+import { motion, useSpring, useTransform } from "framer-motion";
 
 interface CenterRanking {
   center_id: string;
@@ -26,6 +27,18 @@ interface ActivityHeatmap {
   category: string;
   totalActivity: number;
   percentage: number;
+}
+
+// Counter Animation Component
+function AnimatedCounter({ value, duration = 2 }: { value: number; duration?: number }) {
+  const spring = useSpring(0, { duration: duration * 1000 });
+  const display = useTransform(spring, (current) => Math.round(current));
+
+  React.useEffect(() => {
+    spring.set(value);
+  }, [spring, value]);
+
+  return <motion.span>{display}</motion.span>;
 }
 
 export default function LeaderboardPage() {
@@ -200,7 +213,21 @@ export default function LeaderboardPage() {
   };
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-600" />;
+    if (rank === 1) return (
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+        className="relative"
+      >
+        <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 bg-yellow-400/30 rounded-full blur-xl"
+        />
+      </motion.div>
+    );
     if (rank === 2) return <Award className="w-5 h-5 text-gray-600" />;
     if (rank === 3) return <Award className="w-5 h-5 text-orange-600" />;
     return null;
@@ -218,23 +245,27 @@ export default function LeaderboardPage() {
   const COLORS = ["#059669", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50">
+    <div className="min-h-screen bg-slate-950">
       {/* الهيدر */}
-      <header className="bg-white border-b border-gray-200 shadow-lg">
+      <header className="glass-effect border-b border-emerald-500/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-[#059669] font-tajawal flex items-center gap-3">
-                <Trophy className="w-8 h-8" />
+              <motion.h1 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-black text-emerald-400 font-tajawal flex items-center gap-3"
+              >
+                <Trophy className="w-8 h-8 neon-glow" />
                 لوحة المقارنة والتقييم
-              </h1>
-              <p className="text-sm text-gray-600 mt-2">ترتيب المراكز الـ 23 حسب الأداء والنشاط</p>
+              </motion.h1>
+              <p className="text-sm text-slate-400 mt-2">ترتيب المراكز الـ 23 حسب الأداء والنشاط</p>
             </div>
             <div className="flex items-center gap-3">
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value as "today" | "week" | "month")}
-                className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-semibold"
+                className="px-4 py-2 bg-slate-900/50 border-2 border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-semibold text-slate-100"
               >
                 <option value="today">اليوم</option>
                 <option value="week">آخر أسبوع</option>
@@ -258,92 +289,123 @@ export default function LeaderboardPage() {
           <div className="space-y-6">
             {/* بطاقات الإحصائيات السريعة */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-semibold">إجمالي النقاط</p>
-                    <p className="text-3xl font-black text-gray-900 mt-2">
-                      {rankings.reduce((sum, c) => sum + c.score, 0).toFixed(0)}
+                    <p className="text-sm text-slate-400 font-semibold">إجمالي النقاط</p>
+                    <p className="text-3xl font-black text-emerald-400 mt-2">
+                      <AnimatedCounter value={rankings.reduce((sum, c) => sum + c.score, 0)} />
                     </p>
                   </div>
-                  <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <Trophy className="w-8 h-8 text-emerald-600" />
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                    <Trophy className="w-8 h-8 text-emerald-400 neon-glow" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-semibold">المراكز النشطة</p>
-                    <p className="text-3xl font-black text-gray-900 mt-2">
-                      {rankings.filter((c) => c.isActive).length}
+                    <p className="text-sm text-slate-400 font-semibold">المراكز النشطة</p>
+                    <p className="text-3xl font-black text-blue-400 mt-2">
+                      <AnimatedCounter value={rankings.filter((c) => c.isActive).length} />
                     </p>
                   </div>
-                  <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Activity className="w-8 h-8 text-blue-600" />
+                  <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <Activity className="w-8 h-8 text-blue-400 neon-glow" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-semibold">المراكز الراكدة</p>
-                    <p className="text-3xl font-black text-gray-900 mt-2">{inactiveCenters.length}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <AlertTriangle className="w-8 h-8 text-orange-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-semibold">إجمالي البوسترات</p>
-                    <p className="text-3xl font-black text-gray-900 mt-2">
-                      {rankings.reduce((sum, c) => sum + c.total_posters, 0)}
+                    <p className="text-sm text-slate-400 font-semibold">المراكز الراكدة</p>
+                    <p className="text-3xl font-black text-orange-400 mt-2">
+                      <AnimatedCounter value={inactiveCenters.length} />
                     </p>
                   </div>
-                  <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Zap className="w-8 h-8 text-purple-600" />
+                  <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="w-8 h-8 text-orange-400 neon-glow" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400 font-semibold">إجمالي البوسترات</p>
+                    <p className="text-3xl font-black text-purple-400 mt-2">
+                      <AnimatedCounter value={rankings.reduce((sum, c) => sum + c.total_posters, 0)} />
+                    </p>
+                  </div>
+                  <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                    <Zap className="w-8 h-8 text-purple-400 neon-glow" />
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
             {/* تنبيهات الركود */}
             {inactiveCenters.length > 0 && (
-              <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-6">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="glass-effect border-2 border-orange-500/30 rounded-2xl p-6 bg-orange-500/10"
+              >
                 <div className="flex items-center gap-3 mb-4">
                   <AlertTriangle className="w-6 h-6 text-orange-600" />
-                  <h2 className="text-xl font-black text-orange-900 font-tajawal">تنبيه: مراكز غير نشطة</h2>
+                  <h2 className="text-xl font-black text-orange-400 font-tajawal">تنبيه: مراكز غير نشطة</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {inactiveCenters.slice(0, 6).map((center) => (
-                    <div
+                    <motion.div
                       key={center.center_id}
-                      className="bg-white rounded-xl p-4 border border-orange-200 flex items-center justify-between"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="glass-effect rounded-xl p-4 border border-orange-500/30 flex items-center justify-between"
                     >
                       <div>
-                        <p className="font-semibold text-gray-900">{center.center_name}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-semibold text-slate-100">{center.center_name}</p>
+                        <p className="text-sm text-slate-400">
                           آخر نشاط: {center.daysInactive === 999 ? "لم يبدأ" : `منذ ${center.daysInactive} يوم`}
                         </p>
                       </div>
-                      <AlertTriangle className="w-5 h-5 text-orange-500" />
-                    </div>
+                      <AlertTriangle className="w-5 h-5 text-orange-400 neon-glow" />
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* الرسم البياني للمراكز العشرة الأولى */}
             {chartData.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h2 className="text-xl font-black text-gray-900 font-tajawal mb-6 flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6 text-emerald-600" />
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
+                <h2 className="text-xl font-black text-emerald-400 font-tajawal mb-6 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-emerald-400 neon-glow" />
                   المراكز العشرة الأولى
                 </h2>
                 <ResponsiveContainer width="100%" height={400}>
@@ -356,14 +418,18 @@ export default function LeaderboardPage() {
                     <Bar dataKey="نقاط" fill="#059669" radius={[0, 8, 8, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </motion.div>
             )}
 
             {/* خريطة النشاط (Activity Heatmap) */}
             {heatmap.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h2 className="text-xl font-black text-gray-900 font-tajawal mb-6 flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-emerald-600" />
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-effect rounded-2xl p-6 border-emerald-500/20"
+              >
+                <h2 className="text-xl font-black text-emerald-400 font-tajawal mb-6 flex items-center gap-2">
+                  <Activity className="w-6 h-6 text-emerald-400 neon-glow" />
                   خريطة النشاط - المواضيع الأكثر تركيزاً
                 </h2>
                 <div className="space-y-4">
@@ -371,75 +437,107 @@ export default function LeaderboardPage() {
                     <div key={item.topic} className="relative">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-gray-600">#{index + 1}</span>
-                          <span className="font-semibold text-gray-900">{item.topic}</span>
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                          <span className="text-sm font-bold text-slate-400">#{index + 1}</span>
+                          <span className="font-semibold text-slate-100">{item.topic}</span>
+                          <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">
                             {item.category}
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="font-black text-emerald-600">{item.totalActivity}</span>
-                          <span className="text-sm text-gray-600 mr-2">نشاط</span>
-                          <span className="font-bold text-gray-700">{item.percentage.toFixed(1)}%</span>
+                          <span className="font-black text-emerald-400">{item.totalActivity}</span>
+                          <span className="text-sm text-slate-400 mr-2">نشاط</span>
+                          <span className="font-bold text-slate-300">{item.percentage.toFixed(1)}%</span>
                         </div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
+                      <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${item.percentage}%` }}
+                          transition={{ duration: 1, delay: index * 0.1 }}
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"
+                        ></motion.div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* جدول الترتيب الكامل */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-emerald-700">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-effect rounded-2xl overflow-hidden border-emerald-500/20"
+            >
+              <div className="p-6 border-b border-emerald-500/30 bg-gradient-to-r from-emerald-600/80 to-emerald-700/80 backdrop-blur-sm">
                 <h2 className="text-2xl font-black text-white font-tajawal flex items-center gap-2">
-                  <Trophy className="w-7 h-7" />
+                  <Trophy className="w-7 h-7 neon-glow" />
                   الترتيب الكامل للمراكز
                 </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-slate-900/50">
                     <tr>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">الترتيب</th>
-                      <th className="px-6 py-4 text-right font-black text-sm text-gray-700">اسم المركز</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">اللقاءات</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">المحاضرات</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">الندوات</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">البوسترات</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">النقاط</th>
-                      <th className="px-6 py-4 text-center font-black text-sm text-gray-700">الحالة</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">الترتيب</th>
+                      <th className="px-6 py-4 text-right font-black text-sm text-emerald-400">اسم المركز</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">اللقاءات</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">المحاضرات</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">الندوات</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">البوسترات</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">النقاط</th>
+                      <th className="px-6 py-4 text-center font-black text-sm text-emerald-400">الحالة</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-700/50">
                     {rankings.map((center) => (
-                      <tr
+                      <motion.tr
                         key={center.center_id}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          center.rank <= 3 ? "bg-emerald-50/50" : ""
-                        } ${!center.isActive ? "bg-orange-50/30" : ""}`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: center.rank * 0.03 }}
+                        className={`hover:bg-slate-800/50 transition-colors ${
+                          center.rank === 1 ? "bg-yellow-500/10 border-l-4 border-yellow-500" : ""
+                        } ${center.rank === 2 ? "bg-gray-500/10 border-l-4 border-gray-400" : ""}
+                        ${center.rank === 3 ? "bg-orange-500/10 border-l-4 border-orange-400" : ""}
+                        ${!center.isActive ? "bg-orange-500/5" : ""}`}
                       >
                         <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: center.rank * 0.05 }}
+                            className="flex items-center justify-center gap-2"
+                          >
                             {getRankIcon(center.rank)}
                             <span
-                              className={`inline-flex items-center justify-center w-10 h-10 rounded-full border-2 font-black ${getRankColor(
-                                center.rank
-                              )}`}
+                              className={`inline-flex items-center justify-center w-10 h-10 rounded-full border-2 font-black ${
+                                center.rank === 1 
+                                  ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-500 shadow-lg shadow-yellow-500/50" 
+                                  : center.rank === 2
+                                  ? "bg-gradient-to-br from-gray-300 to-gray-500 text-gray-900 border-gray-400"
+                                  : center.rank === 3
+                                  ? "bg-gradient-to-br from-orange-300 to-orange-500 text-orange-900 border-orange-400"
+                                  : "bg-slate-800 text-slate-300 border-slate-600"
+                              }`}
                             >
                               {center.rank}
                             </span>
-                          </div>
+                          </motion.div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <span className="font-semibold text-gray-900">{center.center_name}</span>
+                            {center.rank === 1 && (
+                              <motion.div
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                              >
+                                <Crown className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                              </motion.div>
+                            )}
+                            <span className={`font-semibold ${center.rank === 1 ? "text-yellow-400" : "text-slate-100"}`}>
+                              {center.center_name}
+                            </span>
                             {!center.isActive && (
                               <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full flex items-center gap-1">
                                 <AlertTriangle className="w-3 h-3" />
@@ -448,22 +546,27 @@ export default function LeaderboardPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center font-semibold text-gray-700">
+                        <td className="px-6 py-4 text-center font-semibold text-slate-300">
                           {center.total_meetings}
                         </td>
-                        <td className="px-6 py-4 text-center font-semibold text-gray-700">
+                        <td className="px-6 py-4 text-center font-semibold text-slate-300">
                           {center.total_lectures}
                         </td>
-                        <td className="px-6 py-4 text-center font-semibold text-gray-700">
+                        <td className="px-6 py-4 text-center font-semibold text-slate-300">
                           {center.total_seminars}
                         </td>
-                        <td className="px-6 py-4 text-center font-semibold text-gray-700">
+                        <td className="px-6 py-4 text-center font-semibold text-slate-300">
                           {center.total_posters}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full font-black text-lg">
-                            {center.score.toFixed(1)}
-                          </span>
+                          <motion.span 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: center.rank * 0.05, type: "spring" }}
+                            className="inline-flex items-center px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-full font-black text-lg border border-emerald-500/30"
+                          >
+                            <AnimatedCounter value={center.score} duration={1.5} />
+                          </motion.span>
                         </td>
                         <td className="px-6 py-4 text-center">
                           {center.isActive ? (
@@ -476,12 +579,12 @@ export default function LeaderboardPage() {
                             </span>
                           )}
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </div>

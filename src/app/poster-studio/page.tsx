@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaMagic, FaFilePdf, FaChartLine, FaHospitalSymbol } from 'react-icons/fa';
 
 export default function PosterStudio() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [score, setScore] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [posterImage, setPosterImage] = useState<string | null>(null);
+  const [topic, setTopic] = useState('');
 
   // 1. مزامنة الجلسة لضمان التعرف على هوية "مدير قطاع كركوك"
   useEffect(() => {
@@ -65,15 +68,56 @@ export default function PosterStudio() {
             </button>
           </div>
           
-          <div className="aspect-[3/4] bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center">
-            {generating ? (
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-emerald-400">ذكاء Gemini يصمم الآن...</p>
-              </div>
-            ) : (
-              <p className="text-slate-500">اكتب موضوعاً واضغط على 'توليد' للبدء</p>
-            )}
+          <div className="aspect-[3/4] bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              {generating ? (
+                <motion.div
+                  key="generating"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center w-full p-8"
+                >
+                  <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                  <p className="text-emerald-400 font-bold mb-4">ذكاء Gemini يصمم الآن...</p>
+                  
+                  {/* Progress Bar أنيق */}
+                  <div className="w-full max-w-xs mx-auto">
+                    <div className="flex justify-between text-xs text-slate-400 mb-2">
+                      <span>التقدم</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ) : posterImage ? (
+                <motion.img
+                  key="poster"
+                  src={posterImage}
+                  alt="البوستر المولد"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="w-full h-full object-contain rounded-2xl"
+                />
+              ) : (
+                <motion.p
+                  key="placeholder"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-slate-500 text-center px-4"
+                >
+                  اكتب موضوعاً واضغط على 'توليد' للبدء
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
 
@@ -91,7 +135,9 @@ export default function PosterStudio() {
               <div>
                 <label className="text-xs text-slate-400 mb-1 block">موضوع البوستر</label>
                 <textarea 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 focus:border-emerald-500 outline-none transition-all resize-none h-32"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 focus:border-emerald-500 outline-none transition-all resize-none h-32 text-slate-100"
                   placeholder="مثال: أهمية غسل اليدين للوقاية من الكوليرا في كركوك"
                 />
               </div>
@@ -104,10 +150,53 @@ export default function PosterStudio() {
                 </select>
               </div>
               <button 
-                onClick={() => setGenerating(true)}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 py-4 rounded-xl font-bold hover:scale-[1.02] transition-transform"
+                onClick={async () => {
+                  if (!topic.trim()) {
+                    alert('يرجى إدخال موضوع البوستر');
+                    return;
+                  }
+                  setGenerating(true);
+                  setProgress(0);
+                  setPosterImage(null);
+                  
+                  // محاكاة التقدم
+                  const progressInterval = setInterval(() => {
+                    setProgress((prev) => {
+                      if (prev >= 90) {
+                        clearInterval(progressInterval);
+                        return 90;
+                      }
+                      return prev + 10;
+                    });
+                  }, 500);
+                  
+                  // هنا سيتم استدعاء API لتوليد البوستر
+                  // مؤقتاً: محاكاة النجاح بعد 3 ثوان
+                  setTimeout(() => {
+                    clearInterval(progressInterval);
+                    setProgress(100);
+                    setTimeout(() => {
+                      setGenerating(false);
+                      // setPosterImage('/path/to/generated-poster.png'); // سيتم استبدالها بالصورة الفعلية
+                    }, 500);
+                  }, 3000);
+                }}
+                disabled={generating}
+                className={`w-full bg-gradient-to-r from-emerald-600 to-teal-600 py-4 rounded-xl font-bold hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 ${
+                  generating ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                توليد الإنفوجرافيك الآن
+                {generating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>جاري التوليد...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaMagic />
+                    <span>توليد الإنفوجرافيك الآن</span>
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
